@@ -42,6 +42,8 @@ These docs are separate from the VedaOps doctrine repository. VedaOps docs are c
 33. `33-early-trust-features.md` - MVP-adjacent trust features including experiment pre-registration, methodology changelog, and staged backlog for later high-value ideas.
 34. `34-local-dev-now-vforge-portability-plan.md` - plan for starting local development now while keeping GoingBulk standalone, portable, and ready for later VedaOps/V Forge integration.
 35. `35-repo-github-professional-setup.md` - professional local repo and GitHub setup, including branch strategy, secrets policy, issue/milestone workflow, CI, and V Forge portability requirements.
+36. `36-mvp-schema-implementation-contract.md` - implementation-ready MVP schema contract covering table list, fields, constraints, indexes, RLS, imports, audit logging, and Drizzle/Supabase notes.
+37. `37-detailed-nutrient-modeling.md` - architecture decision for detailed Cronometer nutrient storage using `nutrient_definitions` and `nutrition_log_nutrients`.
 
 ## Working Principle
 
@@ -52,3 +54,4 @@ Boring, consistent logging creates trustworthy data. Trustworthy data creates be
 GoingBulk is not intended to be a medical advice platform, clinical trial, drama channel, or replacement for professional care.
 
 GoingBulk experiments are personal N=1 documentation unless explicitly stated otherwise.
+
