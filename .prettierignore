@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+coverage
+pnpm-lock.yaml
+*.bak
+local-data
+imports/private
+exports/private
+docs/

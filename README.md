@@ -4,7 +4,7 @@ GoingBulk is a public, data-driven fitness and health brand built around transpa
 
 ## Current Status
 
-Planning and repo foundation.
+Next.js app foundation with documentation-first project planning.
 
 The project is intentionally starting as a standalone Next.js app that can later be brought into the VedaOps / V Forge ecosystem as a child project.
 
@@ -31,9 +31,7 @@ The project is intentionally starting as a standalone Next.js app that can later
 
 ## Local Development
 
-This app has not been scaffolded yet. Once the Next.js app is initialized, expected commands will be documented here.
-
-Planned commands:
+Run these commands from the repo root:
 
 ```bash
 pnpm install
