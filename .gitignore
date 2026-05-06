@@ -49,3 +49,28 @@ progress-photos/private/
 
 # editor/tool backups
 *.bak
+
+# Next.js scaffold defaults
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+# testing
+/coverage
+/.next/
+/out/
+# misc
+# debug
+.pnpm-debug.log*
+# env files (can opt-in for committing if needed)
+.env*
+# vercel
+.vercel
+# typescript
+*.tsbuildinfo
+next-env.d.ts
