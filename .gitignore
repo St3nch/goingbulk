@@ -1,0 +1,51 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# next
+.next
+out
+
+# production/build
+dist
+build
+
+# env / secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# os/editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea
+
+# keys/certs
+*.pem
+*.key
+*.p12
+*.pfx
+
+# local private data/imports/exports
+local-data/
+imports/private/
+exports/private/
+
+# health/private files - never commit raw personal data
+*.lab.pdf
+*.dexa.pdf
+bloodwork/
+dexa/
+progress-photos/private/
+
+# editor/tool backups
+*.bak
