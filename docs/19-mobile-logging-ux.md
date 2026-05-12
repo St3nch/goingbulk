@@ -176,6 +176,61 @@ Useful shortcuts:
 - rest timer auto-start;
 - previous set visible.
 
+## Rest Stopwatch / Timer Requirements
+
+The workout logger must include a large, obvious rest stopwatch/timer available after every completed set.
+
+This is a core gym-use feature, not a nice-to-have.
+
+The app should recommend rest time based on the current program's planned rest prescription when available.
+
+Example:
+
+```text
+Set completed
+Recommended rest: 90 seconds
+[ BIG REST BUTTON ]
+```
+
+The user should be able to start and stop rest manually with one obvious button.
+
+Recommended behavior:
+
+```text
+1. User completes a set.
+2. App displays recommended rest time from the planned set/program.
+3. User taps a large rest button to start rest.
+4. App logs rest_started_at.
+5. Timer counts up/down visibly.
+6. User taps the button again to stop rest.
+7. App logs rest_ended_at and actual_rest_seconds.
+8. App compares planned rest vs actual rest.
+```
+
+The button should be intentionally easy to hit during training.
+
+UI note:
+
+```text
+Use a large high-contrast button, jokingly referred to as the "big red button" in planning notes.
+```
+
+Rest data should support:
+
+```text
+planned_rest_seconds
+rest_started_at
+rest_ended_at
+actual_rest_seconds
+rest_was_shorter_than_planned
+rest_was_longer_than_planned
+manual_adjustment_reason optional
+```
+
+If the user forgets to start or stop the timer, the app should allow manual correction after the set or during workout review.
+
+Rest-time adherence can later appear in weekly scorecards and program adherence reports.
+
 ## Supplement Logging UX
 
 Supplements should be a daily checklist.

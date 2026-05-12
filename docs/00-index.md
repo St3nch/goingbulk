@@ -44,6 +44,8 @@ These docs are separate from the VedaOps doctrine repository. VedaOps docs are c
 35. `35-repo-github-professional-setup.md` - professional local repo and GitHub setup, including branch strategy, secrets policy, issue/milestone workflow, CI, and V Forge portability requirements.
 36. `36-mvp-schema-implementation-contract.md` - implementation-ready MVP schema contract covering table list, fields, constraints, indexes, RLS, imports, audit logging, and Drizzle/Supabase notes.
 37. `37-detailed-nutrient-modeling.md` - architecture decision for detailed Cronometer nutrient storage using `nutrient_definitions` and `nutrition_log_nutrients`.
+38. `38-training-program-template-and-scheduling-model.md` - planned workout program, scheduling, daily execution, and planned-vs-actual tracking model based on the collected Jim Stoppani program structures.
+39. `39-transparency-data-display-and-tracking-model.md` - transparency-focused display and tracking model covering planned-vs-actual, modifications, recovery context, symptoms, costs, scorecards, and public-safe summaries.
 
 ## Working Principle
 
