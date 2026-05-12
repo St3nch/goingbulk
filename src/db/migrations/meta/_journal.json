@@ -8,6 +8,13 @@
       "when": 1778613296592,
       "tag": "0000_last_doctor_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778615000000,
+      "tag": "0001_auth_rls_scaffold",
+      "breakpoints": true
     }
   ]
 }
