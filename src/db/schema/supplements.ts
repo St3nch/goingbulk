@@ -29,11 +29,12 @@ export const supplementLogs = pgTable(
     timeTaken: text("time_taken"),
     dose: text("dose"),
     unit: text("unit"),
-    adherenceStatus: adherenceStatusEnum("adherence_status").notNull().default("taken"),
+    adherenceStatus: adherenceStatusEnum("adherence_status").notNull().default("pending"),
     confidenceLevel: confidenceEnum("confidence_level").notNull().default("high"),
     visibility: visibilityEnum("visibility").notNull().default("private"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("idx_supplement_logs_date").on(table.date),

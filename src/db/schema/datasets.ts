@@ -1,4 +1,4 @@
-import { check, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 import { confidenceEnum, visibilityEnum } from "./enums";
@@ -16,8 +16,8 @@ export const datasets = pgTable(
     limitations: text("limitations"),
     confidenceLevel: confidenceEnum("confidence_level").notNull().default("medium"),
     visibility: visibilityEnum("visibility").notNull().default("private"),
-    dateRangeStart: timestamp("date_range_start", { withTimezone: true }).notNull(),
-    dateRangeEnd: timestamp("date_range_end", { withTimezone: true }).notNull(),
+    dateRangeStart: date("date_range_start").notNull(),
+    dateRangeEnd: date("date_range_end").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -36,8 +36,8 @@ export const datasetExports = pgTable(
       .references(() => datasets.id, { onDelete: "cascade" }),
     format: text("format").notNull(),
     fileUrl: text("file_url").notNull(),
-    rowCount: text("row_count"),
-    fileSizeBytes: text("file_size_bytes"),
+    rowCount: integer("row_count"),
+    fileSizeBytes: integer("file_size_bytes"),
     generatedBy: uuid("generated_by").references(() => userProfiles.id, {
       onDelete: "set null",
     }),
