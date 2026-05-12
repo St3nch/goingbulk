@@ -80,7 +80,10 @@ export const nutritionLogNutrients = pgTable(
       .references(() => nutritionLogs.id, { onDelete: "cascade" }),
     nutrientKey: text("nutrient_key")
       .notNull()
-      .references(() => nutrientDefinitions.nutrientKey),
+      .references(() => nutrientDefinitions.nutrientKey, {
+        onDelete: "restrict",
+        onUpdate: "cascade",
+      }),
     value: numeric("value", { precision: 12, scale: 4 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

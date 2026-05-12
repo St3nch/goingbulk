@@ -27,7 +27,7 @@ export const nutritionImportBatches = pgTable(
     approvedAt: timestamp("approved_at", { withTimezone: true }),
     uploadedBy: uuid("uploaded_by")
       .notNull()
-      .references(() => userProfiles.id),
+      .references(() => userProfiles.id, { onDelete: "restrict" }),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

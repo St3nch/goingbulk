@@ -1,0 +1,2394 @@
+{
+  "id": "63b20da1-b92f-4122-8c56-18f87f68ce43",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.audit_log": {
+      "name": "audit_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "table_name": {
+          "name": "table_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "old_values": {
+          "name": "old_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "new_values": {
+          "name": "new_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changed_by": {
+          "name": "changed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changed_at": {
+          "name": "changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "inet",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_audit_log_table_record": {
+          "name": "idx_audit_log_table_record",
+          "columns": [
+            {
+              "expression": "table_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_audit_log_changed_at": {
+          "name": "idx_audit_log_changed_at",
+          "columns": [
+            {
+              "expression": "changed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_log_changed_by_user_profiles_id_fk": {
+          "name": "audit_log_changed_by_user_profiles_id_fk",
+          "tableFrom": "audit_log",
+          "tableTo": "user_profiles",
+          "columnsFrom": ["changed_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.dataset_exports": {
+      "name": "dataset_exports",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dataset_id": {
+          "name": "dataset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "format": {
+          "name": "format",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_url": {
+          "name": "file_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_count": {
+          "name": "row_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_size_bytes": {
+          "name": "file_size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "generated_by": {
+          "name": "generated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_dataset_exports_dataset": {
+          "name": "idx_dataset_exports_dataset",
+          "columns": [
+            {
+              "expression": "dataset_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "dataset_exports_dataset_id_datasets_id_fk": {
+          "name": "dataset_exports_dataset_id_datasets_id_fk",
+          "tableFrom": "dataset_exports",
+          "tableTo": "datasets",
+          "columnsFrom": ["dataset_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "dataset_exports_generated_by_user_profiles_id_fk": {
+          "name": "dataset_exports_generated_by_user_profiles_id_fk",
+          "tableFrom": "dataset_exports",
+          "tableTo": "user_profiles",
+          "columnsFrom": ["generated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.datasets": {
+      "name": "datasets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_summary": {
+          "name": "source_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "methodology_summary": {
+          "name": "methodology_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "limitations": {
+          "name": "limitations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence_level": {
+          "name": "confidence_level",
+          "type": "confidence_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'medium'"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "date_range_start": {
+          "name": "date_range_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_range_end": {
+          "name": "date_range_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_datasets_visibility": {
+          "name": "idx_datasets_visibility",
+          "columns": [
+            {
+              "expression": "visibility",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "datasets_slug_unique": {
+          "name": "datasets_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["slug"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "datasets_date_range_check": {
+          "name": "datasets_date_range_check",
+          "value": "\"datasets\".\"date_range_end\" >= \"datasets\".\"date_range_start\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.exercises": {
+      "name": "exercises",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "primary_muscle_group": {
+          "name": "primary_muscle_group",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "secondary_muscle_groups": {
+          "name": "secondary_muscle_groups",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "equipment": {
+          "name": "equipment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "movement_pattern": {
+          "name": "movement_pattern",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "exercises_name_unique": {
+          "name": "exercises_name_unique",
+          "nullsNotDistinct": false,
+          "columns": ["name"]
+        },
+        "exercises_slug_unique": {
+          "name": "exercises_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["slug"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.confounder_logs": {
+      "name": "confounder_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confounder_type": {
+          "name": "confounder_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "severity": {
+          "name": "severity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "impact_areas": {
+          "name": "impact_areas",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_confounder_logs_date": {
+          "name": "idx_confounder_logs_date",
+          "columns": [
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "confounder_logs_type_check": {
+          "name": "confounder_logs_type_check",
+          "value": "\"confounder_logs\".\"confounder_type\" IN ('poor_sleep', 'high_stress', 'illness', 'injury', 'travel', 'missed_workout', 'missed_supplement', 'alcohol', 'new_program', 'calorie_change', 'medication_change')"
+        },
+        "confounder_logs_severity_check": {
+          "name": "confounder_logs_severity_check",
+          "value": "\"confounder_logs\".\"severity\" IS NULL OR \"confounder_logs\".\"severity\" IN ('minor', 'moderate', 'major')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.experiments": {
+      "name": "experiments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "experiment_type": {
+          "name": "experiment_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'baseline'"
+        },
+        "status": {
+          "name": "status",
+          "type": "experiment_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'planned'"
+        },
+        "question": {
+          "name": "question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hypothesis": {
+          "name": "hypothesis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "protocol_summary": {
+          "name": "protocol_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseline_start": {
+          "name": "baseline_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseline_end": {
+          "name": "baseline_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "intervention_start": {
+          "name": "intervention_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "intervention_end": {
+          "name": "intervention_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followup_start": {
+          "name": "followup_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followup_end": {
+          "name": "followup_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "primary_metrics": {
+          "name": "primary_metrics",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "secondary_metrics": {
+          "name": "secondary_metrics",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence_level": {
+          "name": "confidence_level",
+          "type": "confidence_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'medium'"
+        },
+        "verdict": {
+          "name": "verdict",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_experiments_status": {
+          "name": "idx_experiments_status",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_experiments_visibility": {
+          "name": "idx_experiments_visibility",
+          "columns": [
+            {
+              "expression": "visibility",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "experiments_slug_unique": {
+          "name": "experiments_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["slug"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.measurements": {
+      "name": "measurements",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "measured_at": {
+          "name": "measured_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metric_key": {
+          "name": "metric_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric(10, 3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "log_source_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        },
+        "device": {
+          "name": "device",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "method": {
+          "name": "method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence_level": {
+          "name": "confidence_level",
+          "type": "confidence_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'high'"
+        },
+        "conditions": {
+          "name": "conditions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_measurements_metric_date": {
+          "name": "idx_measurements_metric_date",
+          "columns": [
+            {
+              "expression": "metric_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "measured_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_measurements_visibility": {
+          "name": "idx_measurements_visibility",
+          "columns": [
+            {
+              "expression": "visibility",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "measurements_metric_key_check": {
+          "name": "measurements_metric_key_check",
+          "value": "\"measurements\".\"metric_key\" IN ('bodyweight', 'waist', 'chest', 'hips', 'neck', 'bicep_left', 'bicep_right', 'thigh_left', 'thigh_right', 'body_fat_estimate', 'blood_pressure_systolic', 'blood_pressure_diastolic', 'resting_heart_rate')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.nutrition_import_batches": {
+      "name": "nutrition_import_batches",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "source": {
+          "name": "source",
+          "type": "log_source_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cronometer_export'"
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_hash": {
+          "name": "file_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_count": {
+          "name": "row_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_range_start": {
+          "name": "date_range_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_range_end": {
+          "name": "date_range_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "import_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'uploaded'"
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uploaded_by": {
+          "name": "uploaded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_nutrition_import_batches_file_hash": {
+          "name": "idx_nutrition_import_batches_file_hash",
+          "columns": [
+            {
+              "expression": "file_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_import_batches_status": {
+          "name": "idx_nutrition_import_batches_status",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_import_batches_dates": {
+          "name": "idx_nutrition_import_batches_dates",
+          "columns": [
+            {
+              "expression": "date_range_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "date_range_end",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "nutrition_import_batches_uploaded_by_user_profiles_id_fk": {
+          "name": "nutrition_import_batches_uploaded_by_user_profiles_id_fk",
+          "tableFrom": "nutrition_import_batches",
+          "tableTo": "user_profiles",
+          "columnsFrom": ["uploaded_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.nutrition_import_rows": {
+      "name": "nutrition_import_rows",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_number": {
+          "name": "row_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_hash": {
+          "name": "row_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_date": {
+          "name": "raw_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_meal": {
+          "name": "raw_meal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_food_name": {
+          "name": "raw_food_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_amount": {
+          "name": "raw_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_calories": {
+          "name": "raw_calories",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_protein": {
+          "name": "raw_protein",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_carbs": {
+          "name": "raw_carbs",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_fat": {
+          "name": "raw_fat",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_fiber": {
+          "name": "raw_fiber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_sodium": {
+          "name": "raw_sodium",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_sugar": {
+          "name": "raw_sugar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_payload": {
+          "name": "raw_payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "import_row_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_nutrition_import_rows_batch_row_number": {
+          "name": "idx_nutrition_import_rows_batch_row_number",
+          "columns": [
+            {
+              "expression": "batch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "row_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_import_rows_batch_row_hash": {
+          "name": "idx_nutrition_import_rows_batch_row_hash",
+          "columns": [
+            {
+              "expression": "batch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "row_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_import_rows_batch": {
+          "name": "idx_nutrition_import_rows_batch",
+          "columns": [
+            {
+              "expression": "batch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_import_rows_hash": {
+          "name": "idx_nutrition_import_rows_hash",
+          "columns": [
+            {
+              "expression": "row_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "nutrition_import_rows_batch_id_nutrition_import_batches_id_fk": {
+          "name": "nutrition_import_rows_batch_id_nutrition_import_batches_id_fk",
+          "tableFrom": "nutrition_import_rows",
+          "tableTo": "nutrition_import_batches",
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.nutrient_definitions": {
+      "name": "nutrient_definitions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "nutrient_key": {
+          "name": "nutrient_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cronometer_column": {
+          "name": "cronometer_column",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "daily_target": {
+          "name": "daily_target",
+          "type": "numeric(10, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "daily_target_unit": {
+          "name": "daily_target_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_nutrient_definitions_key": {
+          "name": "idx_nutrient_definitions_key",
+          "columns": [
+            {
+              "expression": "nutrient_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrient_definitions_cronometer_column": {
+          "name": "idx_nutrient_definitions_cronometer_column",
+          "columns": [
+            {
+              "expression": "cronometer_column",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "nutrient_definitions_nutrient_key_unique": {
+          "name": "nutrient_definitions_nutrient_key_unique",
+          "nullsNotDistinct": false,
+          "columns": ["nutrient_key"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.nutrition_log_nutrients": {
+      "name": "nutrition_log_nutrients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "nutrition_log_id": {
+          "name": "nutrition_log_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nutrient_key": {
+          "name": "nutrient_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_nutrition_log_nutrients_log_key": {
+          "name": "idx_nutrition_log_nutrients_log_key",
+          "columns": [
+            {
+              "expression": "nutrition_log_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "nutrient_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_log_nutrients_log_id": {
+          "name": "idx_nutrition_log_nutrients_log_id",
+          "columns": [
+            {
+              "expression": "nutrition_log_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_log_nutrients_key": {
+          "name": "idx_nutrition_log_nutrients_key",
+          "columns": [
+            {
+              "expression": "nutrient_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_log_nutrients_key_value": {
+          "name": "idx_nutrition_log_nutrients_key_value",
+          "columns": [
+            {
+              "expression": "nutrient_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "value",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "nutrition_log_nutrients_nutrition_log_id_nutrition_logs_id_fk": {
+          "name": "nutrition_log_nutrients_nutrition_log_id_nutrition_logs_id_fk",
+          "tableFrom": "nutrition_log_nutrients",
+          "tableTo": "nutrition_logs",
+          "columnsFrom": ["nutrition_log_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "nutrition_log_nutrients_nutrient_key_nutrient_definitions_nutrient_key_fk": {
+          "name": "nutrition_log_nutrients_nutrient_key_nutrient_definitions_nutrient_key_fk",
+          "tableFrom": "nutrition_log_nutrients",
+          "tableTo": "nutrient_definitions",
+          "columnsFrom": ["nutrient_key"],
+          "columnsTo": ["nutrient_key"],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.nutrition_logs": {
+      "name": "nutrition_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "meal_name": {
+          "name": "meal_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "food_name_snapshot": {
+          "name": "food_name_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grams": {
+          "name": "grams",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calories": {
+          "name": "calories",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "protein_g": {
+          "name": "protein_g",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "carbs_g": {
+          "name": "carbs_g",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fat_g": {
+          "name": "fat_g",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fiber_g": {
+          "name": "fiber_g",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sugar_g": {
+          "name": "sugar_g",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sodium_mg": {
+          "name": "sodium_mg",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "log_source_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cronometer_export'"
+        },
+        "source_batch_id": {
+          "name": "source_batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_row_id": {
+          "name": "source_row_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence_level": {
+          "name": "confidence_level",
+          "type": "confidence_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'medium'"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_nutrition_logs_date": {
+          "name": "idx_nutrition_logs_date",
+          "columns": [
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_logs_visibility": {
+          "name": "idx_nutrition_logs_visibility",
+          "columns": [
+            {
+              "expression": "visibility",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_logs_source_batch": {
+          "name": "idx_nutrition_logs_source_batch",
+          "columns": [
+            {
+              "expression": "source_batch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_nutrition_logs_source_row": {
+          "name": "idx_nutrition_logs_source_row",
+          "columns": [
+            {
+              "expression": "source_row_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "nutrition_logs_source_batch_id_nutrition_import_batches_id_fk": {
+          "name": "nutrition_logs_source_batch_id_nutrition_import_batches_id_fk",
+          "tableFrom": "nutrition_logs",
+          "tableTo": "nutrition_import_batches",
+          "columnsFrom": ["source_batch_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "nutrition_logs_source_row_id_nutrition_import_rows_id_fk": {
+          "name": "nutrition_logs_source_row_id_nutrition_import_rows_id_fk",
+          "tableFrom": "nutrition_logs",
+          "tableTo": "nutrition_import_rows",
+          "columnsFrom": ["source_row_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.supplement_logs": {
+      "name": "supplement_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "supplement_id": {
+          "name": "supplement_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time_taken": {
+          "name": "time_taken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dose": {
+          "name": "dose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "adherence_status": {
+          "name": "adherence_status",
+          "type": "adherence_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "confidence_level": {
+          "name": "confidence_level",
+          "type": "confidence_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'high'"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_supplement_logs_date": {
+          "name": "idx_supplement_logs_date",
+          "columns": [
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_supplement_logs_supplement_date": {
+          "name": "idx_supplement_logs_supplement_date",
+          "columns": [
+            {
+              "expression": "supplement_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "supplement_logs_supplement_id_supplements_id_fk": {
+          "name": "supplement_logs_supplement_id_supplements_id_fk",
+          "tableFrom": "supplement_logs",
+          "tableTo": "supplements",
+          "columnsFrom": ["supplement_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.supplements": {
+      "name": "supplements",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "default_dose": {
+          "name": "default_dose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "default_unit": {
+          "name": "default_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_supplements_slug": {
+          "name": "idx_supplements_slug",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "supplements_slug_unique": {
+          "name": "supplements_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["slug"]
+        },
+        "supplements_name_unique": {
+          "name": "supplements_name_unique",
+          "nullsNotDistinct": false,
+          "columns": ["name"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_profiles": {
+      "name": "user_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_profiles_email_unique": {
+          "name": "user_profiles_email_unique",
+          "nullsNotDistinct": false,
+          "columns": ["email"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.exercise_sets": {
+      "name": "exercise_sets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workout_session_id": {
+          "name": "workout_session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exercise_id": {
+          "name": "exercise_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "set_number": {
+          "name": "set_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "set_type": {
+          "name": "set_type",
+          "type": "set_type_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'working'"
+        },
+        "actual_reps": {
+          "name": "actual_reps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actual_load": {
+          "name": "actual_load",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "load_unit": {
+          "name": "load_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rpe": {
+          "name": "rpe",
+          "type": "numeric(3, 1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rest_seconds": {
+          "name": "rest_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_exercise_sets_session_set_number": {
+          "name": "idx_exercise_sets_session_set_number",
+          "columns": [
+            {
+              "expression": "workout_session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "set_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_exercise_sets_exercise": {
+          "name": "idx_exercise_sets_exercise",
+          "columns": [
+            {
+              "expression": "exercise_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "exercise_sets_workout_session_id_workout_sessions_id_fk": {
+          "name": "exercise_sets_workout_session_id_workout_sessions_id_fk",
+          "tableFrom": "exercise_sets",
+          "tableTo": "workout_sessions",
+          "columnsFrom": ["workout_session_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "exercise_sets_exercise_id_exercises_id_fk": {
+          "name": "exercise_sets_exercise_id_exercises_id_fk",
+          "tableFrom": "exercise_sets",
+          "tableTo": "exercises",
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "exercise_sets_set_number_check": {
+          "name": "exercise_sets_set_number_check",
+          "value": "\"exercise_sets\".\"set_number\" > 0"
+        },
+        "exercise_sets_actual_reps_check": {
+          "name": "exercise_sets_actual_reps_check",
+          "value": "\"exercise_sets\".\"actual_reps\" IS NULL OR \"exercise_sets\".\"actual_reps\" >= 0"
+        },
+        "exercise_sets_actual_load_check": {
+          "name": "exercise_sets_actual_load_check",
+          "value": "\"exercise_sets\".\"actual_load\" IS NULL OR \"exercise_sets\".\"actual_load\" >= 0"
+        },
+        "exercise_sets_rest_seconds_check": {
+          "name": "exercise_sets_rest_seconds_check",
+          "value": "\"exercise_sets\".\"rest_seconds\" IS NULL OR \"exercise_sets\".\"rest_seconds\" >= 0"
+        },
+        "exercise_sets_rpe_check": {
+          "name": "exercise_sets_rpe_check",
+          "value": "\"exercise_sets\".\"rpe\" IS NULL OR (\"exercise_sets\".\"rpe\" >= 1 AND \"exercise_sets\".\"rpe\" <= 10)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workout_sessions": {
+      "name": "workout_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workout_name": {
+          "name": "workout_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "workout_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'planned'"
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_workout_sessions_date": {
+          "name": "idx_workout_sessions_date",
+          "columns": [
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_workout_sessions_visibility": {
+          "name": "idx_workout_sessions_visibility",
+          "columns": [
+            {
+              "expression": "visibility",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "workout_sessions_time_check": {
+          "name": "workout_sessions_time_check",
+          "value": "\"workout_sessions\".\"ended_at\" IS NULL OR \"workout_sessions\".\"started_at\" IS NULL OR \"workout_sessions\".\"ended_at\" >= \"workout_sessions\".\"started_at\""
+        },
+        "workout_sessions_duration_check": {
+          "name": "workout_sessions_duration_check",
+          "value": "\"workout_sessions\".\"duration_minutes\" IS NULL OR \"workout_sessions\".\"duration_minutes\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.adherence_status_enum": {
+      "name": "adherence_status_enum",
+      "schema": "public",
+      "values": ["pending", "taken", "missed", "skipped"]
+    },
+    "public.confidence_enum": {
+      "name": "confidence_enum",
+      "schema": "public",
+      "values": ["low", "medium", "high", "experimental"]
+    },
+    "public.experiment_status_enum": {
+      "name": "experiment_status_enum",
+      "schema": "public",
+      "values": ["planned", "baseline", "active", "followup", "completed", "abandoned"]
+    },
+    "public.import_row_status_enum": {
+      "name": "import_row_status_enum",
+      "schema": "public",
+      "values": ["pending", "validated", "normalized", "skipped", "error"]
+    },
+    "public.import_status_enum": {
+      "name": "import_status_enum",
+      "schema": "public",
+      "values": ["uploaded", "previewed", "approved", "rejected", "failed"]
+    },
+    "public.log_source_enum": {
+      "name": "log_source_enum",
+      "schema": "public",
+      "values": ["manual", "cronometer_export", "device_import", "lab_report", "estimated"]
+    },
+    "public.set_type_enum": {
+      "name": "set_type_enum",
+      "schema": "public",
+      "values": ["warmup", "working", "backoff", "drop", "failure", "amrap"]
+    },
+    "public.user_role_enum": {
+      "name": "user_role_enum",
+      "schema": "public",
+      "values": ["owner", "admin", "editor", "professional_viewer", "public"]
+    },
+    "public.visibility_enum": {
+      "name": "visibility_enum",
+      "schema": "public",
+      "values": ["private", "internal", "professional", "public"]
+    },
+    "public.workout_status_enum": {
+      "name": "workout_status_enum",
+      "schema": "public",
+      "values": ["planned", "in_progress", "completed", "cancelled"]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

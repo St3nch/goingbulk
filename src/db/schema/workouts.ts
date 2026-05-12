@@ -1,4 +1,14 @@
-import { check, index, integer, pgTable, real, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  check,
+  date,
+  index,
+  integer,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 import { setTypeEnum, visibilityEnum, workoutStatusEnum } from "./enums";
@@ -8,7 +18,7 @@ export const workoutSessions = pgTable(
   "workout_sessions",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    date: timestamp("date", { withTimezone: true }).notNull(),
+    date: date("date").notNull(),
     workoutName: text("workout_name"),
     status: workoutStatusEnum("status").notNull().default("planned"),
     startedAt: timestamp("started_at", { withTimezone: true }),
@@ -46,12 +56,13 @@ export const exerciseSets = pgTable(
     setNumber: integer("set_number").notNull(),
     setType: setTypeEnum("set_type").notNull().default("working"),
     actualReps: integer("actual_reps"),
-    actualLoad: real("actual_load"),
+    actualLoad: numeric("actual_load", { precision: 8, scale: 2 }),
     loadUnit: text("load_unit"),
-    rpe: real("rpe"),
+    rpe: numeric("rpe", { precision: 3, scale: 1 }),
     restSeconds: integer("rest_seconds"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     check("exercise_sets_set_number_check", sql`${table.setNumber} > 0`),

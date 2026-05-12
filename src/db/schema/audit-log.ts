@@ -11,7 +11,7 @@ export const auditLog = pgTable(
     action: text("action").notNull(),
     oldValues: jsonb("old_values").$type<Record<string, unknown>>(),
     newValues: jsonb("new_values").$type<Record<string, unknown>>(),
-    changedBy: uuid("changed_by").references(() => userProfiles.id),
+    changedBy: uuid("changed_by").references(() => userProfiles.id, { onDelete: "set null" }),
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
     ipAddress: inet("ip_address"),
     userAgent: text("user_agent"),
