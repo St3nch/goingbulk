@@ -46,6 +46,7 @@ These docs are separate from the VedaOps doctrine repository. VedaOps docs are c
 37. `37-detailed-nutrient-modeling.md` - architecture decision for detailed Cronometer nutrient storage using `nutrient_definitions` and `nutrition_log_nutrients`.
 38. `38-training-program-template-and-scheduling-model.md` - planned workout program, scheduling, daily execution, and planned-vs-actual tracking model based on the collected Jim Stoppani program structures.
 39. `39-transparency-data-display-and-tracking-model.md` - transparency-focused display and tracking model covering planned-vs-actual, modifications, recovery context, symptoms, costs, scorecards, and public-safe summaries.
+40. `40-training-program-schema-contract.md` - implementation-ready schema contract for planned training programs, scheduling, planned sets, substitutions, rest tracking, planned-vs-actual links, and public/private display rules.
 
 ## Working Principle
 
@@ -56,4 +57,5 @@ Boring, consistent logging creates trustworthy data. Trustworthy data creates be
 GoingBulk is not intended to be a medical advice platform, clinical trial, drama channel, or replacement for professional care.
 
 GoingBulk experiments are personal N=1 documentation unless explicitly stated otherwise.
+
 
