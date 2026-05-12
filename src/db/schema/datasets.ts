@@ -1,52 +1,48 @@
-import { check, index, integer, pgTable, text, timestamp, uuid, date } from "drizzle-orm/pg-core";
+import { check, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-import { visibilityEnum } from "./enums";
+import { confidenceEnum, visibilityEnum } from "./enums";
 import { userProfiles } from "./user-profiles";
 
 export const datasets = pgTable(
   "datasets",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    name: text("name").notNull(),
+    id: uuid("id").defaultRandom().primaryKey(),
     slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
     description: text("description"),
-    dateRangeStart: date("date_range_start").notNull(),
-    dateRangeEnd: date("date_range_end").notNull(),
     sourceSummary: text("source_summary"),
     methodologySummary: text("methodology_summary"),
     limitations: text("limitations"),
+    confidenceLevel: confidenceEnum("confidence_level").notNull().default("medium"),
     visibility: visibilityEnum("visibility").notNull().default("private"),
+    dateRangeStart: timestamp("date_range_start", { withTimezone: true }).notNull(),
+    dateRangeEnd: timestamp("date_range_end", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("idx_datasets_visibility").on(table.visibility)],
+  (table) => [
+    check("datasets_date_range_check", sql`${table.dateRangeEnd} >= ${table.dateRangeStart}`),
+    index("idx_datasets_visibility").on(table.visibility),
+  ],
 );
 
 export const datasetExports = pgTable(
   "dataset_exports",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").defaultRandom().primaryKey(),
     datasetId: uuid("dataset_id")
       .notNull()
       .references(() => datasets.id, { onDelete: "cascade" }),
-    format: text("format").notNull().default("csv"),
+    format: text("format").notNull(),
     fileUrl: text("file_url").notNull(),
-    fileSize: integer("file_size"),
-    rowCount: integer("row_count"),
-    generatedBy: uuid("generated_by").references(() => userProfiles.id),
-    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
+    rowCount: text("row_count"),
+    fileSizeBytes: text("file_size_bytes"),
+    generatedBy: uuid("generated_by").references(() => userProfiles.id, {
+      onDelete: "set null",
+    }),
     visibility: visibilityEnum("visibility").notNull().default("private"),
-    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    check("dataset_exports_format_check", sql`${table.format} IN ('csv', 'json')`),
-    index("idx_dataset_exports_dataset").on(table.datasetId),
-    index("idx_dataset_exports_visibility").on(table.visibility),
-  ],
+  (table) => [index("idx_dataset_exports_dataset").on(table.datasetId)],
 );
-
-export type Dataset = typeof datasets.$inferSelect;
-export type NewDataset = typeof datasets.$inferInsert;
-export type DatasetExport = typeof datasetExports.$inferSelect;
-export type NewDatasetExport = typeof datasetExports.$inferInsert;
