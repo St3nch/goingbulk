@@ -2,11 +2,15 @@ import { check, index, pgTable, text, timestamp, uuid, date } from "drizzle-orm/
 import { sql } from "drizzle-orm";
 
 import { confidenceEnum, experimentStatusEnum, visibilityEnum } from "./enums";
+import { userProfiles } from "./user-profiles";
 
 export const experiments = pgTable(
   "experiments",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     slug: text("slug").notNull().unique(),
     experimentType: text("experiment_type").notNull().default("baseline"),
@@ -30,6 +34,7 @@ export const experiments = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    index("idx_experiments_user_id").on(table.userId),
     index("idx_experiments_status").on(table.status),
     index("idx_experiments_visibility").on(table.visibility),
   ],
@@ -39,6 +44,9 @@ export const confounderLogs = pgTable(
   "confounder_logs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
     date: date("date").notNull(),
     confounderType: text("confounder_type").notNull(),
     severity: text("severity"),
@@ -56,6 +64,7 @@ export const confounderLogs = pgTable(
       "confounder_logs_severity_check",
       sql`${table.severity} IS NULL OR ${table.severity} IN ('minor', 'moderate', 'major')`,
     ),
+    index("idx_confounder_logs_user_id").on(table.userId),
     index("idx_confounder_logs_date").on(table.date),
   ],
 );

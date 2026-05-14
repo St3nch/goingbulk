@@ -8,6 +8,9 @@ export const datasets = pgTable(
   "datasets",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
     slug: text("slug").notNull().unique(),
     title: text("title").notNull(),
     description: text("description"),
@@ -23,6 +26,7 @@ export const datasets = pgTable(
   },
   (table) => [
     check("datasets_date_range_check", sql`${table.dateRangeEnd} >= ${table.dateRangeStart}`),
+    index("idx_datasets_owner_id").on(table.ownerId),
     index("idx_datasets_visibility").on(table.visibility),
   ],
 );

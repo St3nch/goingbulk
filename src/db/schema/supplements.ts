@@ -1,6 +1,7 @@
 import { date, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { adherenceStatusEnum, confidenceEnum, visibilityEnum } from "./enums";
+import { userProfiles } from "./user-profiles";
 
 export const supplements = pgTable(
   "supplements",
@@ -22,6 +23,9 @@ export const supplementLogs = pgTable(
   "supplement_logs",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
     supplementId: uuid("supplement_id")
       .notNull()
       .references(() => supplements.id, { onDelete: "restrict" }),
@@ -37,6 +41,7 @@ export const supplementLogs = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    index("idx_supplement_logs_user_id").on(table.userId),
     index("idx_supplement_logs_date").on(table.date),
     index("idx_supplement_logs_supplement_date").on(table.supplementId, table.date),
     // Dedup requires a raw SQL expression index because Postgres unique indexes

@@ -13,11 +13,15 @@ import { sql } from "drizzle-orm";
 
 import { setTypeEnum, visibilityEnum, workoutStatusEnum } from "./enums";
 import { exercises } from "./exercises";
+import { userProfiles } from "./user-profiles";
 
 export const workoutSessions = pgTable(
   "workout_sessions",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
     date: date("date").notNull(),
     workoutName: text("workout_name"),
     status: workoutStatusEnum("status").notNull().default("planned"),
@@ -38,6 +42,7 @@ export const workoutSessions = pgTable(
       "workout_sessions_duration_check",
       sql`${table.durationMinutes} IS NULL OR ${table.durationMinutes} >= 0`,
     ),
+    index("idx_workout_sessions_user_id").on(table.userId),
     index("idx_workout_sessions_date").on(table.date),
     index("idx_workout_sessions_visibility").on(table.visibility),
   ],

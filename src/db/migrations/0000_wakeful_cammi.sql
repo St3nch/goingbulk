@@ -35,6 +35,7 @@ CREATE TABLE "dataset_exports" (
 --> statement-breakpoint
 CREATE TABLE "datasets" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"owner_id" uuid NOT NULL,
 	"slug" text NOT NULL,
 	"title" text NOT NULL,
 	"description" text,
@@ -68,6 +69,7 @@ CREATE TABLE "exercises" (
 --> statement-breakpoint
 CREATE TABLE "confounder_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"date" date NOT NULL,
 	"confounder_type" text NOT NULL,
 	"severity" text,
@@ -81,6 +83,7 @@ CREATE TABLE "confounder_logs" (
 --> statement-breakpoint
 CREATE TABLE "experiments" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"title" text NOT NULL,
 	"slug" text NOT NULL,
 	"experiment_type" text DEFAULT 'baseline' NOT NULL,
@@ -107,6 +110,7 @@ CREATE TABLE "experiments" (
 --> statement-breakpoint
 CREATE TABLE "measurements" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"measured_at" timestamp with time zone NOT NULL,
 	"metric_key" text NOT NULL,
 	"value" numeric(10, 3) NOT NULL,
@@ -187,6 +191,7 @@ CREATE TABLE "nutrition_log_nutrients" (
 --> statement-breakpoint
 CREATE TABLE "nutrition_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"date" date NOT NULL,
 	"meal_name" text,
 	"food_name_snapshot" text NOT NULL,
@@ -210,6 +215,7 @@ CREATE TABLE "nutrition_logs" (
 --> statement-breakpoint
 CREATE TABLE "supplement_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"supplement_id" uuid NOT NULL,
 	"date" date NOT NULL,
 	"time_taken" text,
@@ -270,6 +276,7 @@ CREATE TABLE "exercise_sets" (
 --> statement-breakpoint
 CREATE TABLE "workout_sessions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"date" date NOT NULL,
 	"workout_name" text,
 	"status" "workout_status_enum" DEFAULT 'planned' NOT NULL,
@@ -287,22 +294,33 @@ CREATE TABLE "workout_sessions" (
 ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_changed_by_user_profiles_id_fk" FOREIGN KEY ("changed_by") REFERENCES "public"."user_profiles"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dataset_exports" ADD CONSTRAINT "dataset_exports_dataset_id_datasets_id_fk" FOREIGN KEY ("dataset_id") REFERENCES "public"."datasets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dataset_exports" ADD CONSTRAINT "dataset_exports_generated_by_user_profiles_id_fk" FOREIGN KEY ("generated_by") REFERENCES "public"."user_profiles"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "datasets" ADD CONSTRAINT "datasets_owner_id_user_profiles_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "confounder_logs" ADD CONSTRAINT "confounder_logs_user_id_user_profiles_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "experiments" ADD CONSTRAINT "experiments_user_id_user_profiles_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "measurements" ADD CONSTRAINT "measurements_user_id_user_profiles_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nutrition_import_batches" ADD CONSTRAINT "nutrition_import_batches_uploaded_by_user_profiles_id_fk" FOREIGN KEY ("uploaded_by") REFERENCES "public"."user_profiles"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nutrition_import_rows" ADD CONSTRAINT "nutrition_import_rows_batch_id_nutrition_import_batches_id_fk" FOREIGN KEY ("batch_id") REFERENCES "public"."nutrition_import_batches"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nutrition_log_nutrients" ADD CONSTRAINT "nutrition_log_nutrients_nutrition_log_id_nutrition_logs_id_fk" FOREIGN KEY ("nutrition_log_id") REFERENCES "public"."nutrition_logs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nutrition_log_nutrients" ADD CONSTRAINT "nutrition_log_nutrients_nutrient_key_nutrient_definitions_nutrient_key_fk" FOREIGN KEY ("nutrient_key") REFERENCES "public"."nutrient_definitions"("nutrient_key") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "nutrition_logs" ADD CONSTRAINT "nutrition_logs_user_id_user_profiles_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nutrition_logs" ADD CONSTRAINT "nutrition_logs_source_batch_id_nutrition_import_batches_id_fk" FOREIGN KEY ("source_batch_id") REFERENCES "public"."nutrition_import_batches"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nutrition_logs" ADD CONSTRAINT "nutrition_logs_source_row_id_nutrition_import_rows_id_fk" FOREIGN KEY ("source_row_id") REFERENCES "public"."nutrition_import_rows"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "supplement_logs" ADD CONSTRAINT "supplement_logs_user_id_user_profiles_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "supplement_logs" ADD CONSTRAINT "supplement_logs_supplement_id_supplements_id_fk" FOREIGN KEY ("supplement_id") REFERENCES "public"."supplements"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "exercise_sets" ADD CONSTRAINT "exercise_sets_workout_session_id_workout_sessions_id_fk" FOREIGN KEY ("workout_session_id") REFERENCES "public"."workout_sessions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "exercise_sets" ADD CONSTRAINT "exercise_sets_exercise_id_exercises_id_fk" FOREIGN KEY ("exercise_id") REFERENCES "public"."exercises"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_user_id_user_profiles_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_audit_log_table_record" ON "audit_log" USING btree ("table_name","record_id");--> statement-breakpoint
 CREATE INDEX "idx_audit_log_changed_at" ON "audit_log" USING btree ("changed_at");--> statement-breakpoint
 CREATE INDEX "idx_dataset_exports_dataset" ON "dataset_exports" USING btree ("dataset_id");--> statement-breakpoint
+CREATE INDEX "idx_datasets_owner_id" ON "datasets" USING btree ("owner_id");--> statement-breakpoint
 CREATE INDEX "idx_datasets_visibility" ON "datasets" USING btree ("visibility");--> statement-breakpoint
+CREATE INDEX "idx_confounder_logs_user_id" ON "confounder_logs" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_confounder_logs_date" ON "confounder_logs" USING btree ("date");--> statement-breakpoint
+CREATE INDEX "idx_experiments_user_id" ON "experiments" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_experiments_status" ON "experiments" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_experiments_visibility" ON "experiments" USING btree ("visibility");--> statement-breakpoint
+CREATE INDEX "idx_measurements_user_id" ON "measurements" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_measurements_metric_date" ON "measurements" USING btree ("metric_key","measured_at");--> statement-breakpoint
 CREATE INDEX "idx_measurements_visibility" ON "measurements" USING btree ("visibility");--> statement-breakpoint
 CREATE UNIQUE INDEX "idx_nutrition_import_batches_file_hash" ON "nutrition_import_batches" USING btree ("file_hash");--> statement-breakpoint
@@ -318,14 +336,17 @@ CREATE UNIQUE INDEX "idx_nutrition_log_nutrients_log_key" ON "nutrition_log_nutr
 CREATE INDEX "idx_nutrition_log_nutrients_log_id" ON "nutrition_log_nutrients" USING btree ("nutrition_log_id");--> statement-breakpoint
 CREATE INDEX "idx_nutrition_log_nutrients_key" ON "nutrition_log_nutrients" USING btree ("nutrient_key");--> statement-breakpoint
 CREATE INDEX "idx_nutrition_log_nutrients_key_value" ON "nutrition_log_nutrients" USING btree ("nutrient_key","value");--> statement-breakpoint
+CREATE INDEX "idx_nutrition_logs_user_id" ON "nutrition_logs" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_nutrition_logs_date" ON "nutrition_logs" USING btree ("date");--> statement-breakpoint
 CREATE INDEX "idx_nutrition_logs_visibility" ON "nutrition_logs" USING btree ("visibility");--> statement-breakpoint
 CREATE INDEX "idx_nutrition_logs_source_batch" ON "nutrition_logs" USING btree ("source_batch_id");--> statement-breakpoint
 CREATE INDEX "idx_nutrition_logs_source_row" ON "nutrition_logs" USING btree ("source_row_id");--> statement-breakpoint
+CREATE INDEX "idx_supplement_logs_user_id" ON "supplement_logs" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_supplement_logs_date" ON "supplement_logs" USING btree ("date");--> statement-breakpoint
 CREATE INDEX "idx_supplement_logs_supplement_date" ON "supplement_logs" USING btree ("supplement_id","date");--> statement-breakpoint
 CREATE INDEX "idx_supplements_slug" ON "supplements" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "idx_exercise_sets_session_set_number" ON "exercise_sets" USING btree ("workout_session_id","set_number");--> statement-breakpoint
 CREATE INDEX "idx_exercise_sets_exercise" ON "exercise_sets" USING btree ("exercise_id");--> statement-breakpoint
+CREATE INDEX "idx_workout_sessions_user_id" ON "workout_sessions" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_workout_sessions_date" ON "workout_sessions" USING btree ("date");--> statement-breakpoint
 CREATE INDEX "idx_workout_sessions_visibility" ON "workout_sessions" USING btree ("visibility");

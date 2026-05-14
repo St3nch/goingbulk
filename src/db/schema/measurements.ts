@@ -2,11 +2,15 @@ import { check, index, numeric, pgTable, text, timestamp, uuid } from "drizzle-o
 import { sql } from "drizzle-orm";
 
 import { confidenceEnum, logSourceEnum, visibilityEnum } from "./enums";
+import { userProfiles } from "./user-profiles";
 
 export const measurements = pgTable(
   "measurements",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
     measuredAt: timestamp("measured_at", { withTimezone: true }).notNull(),
     metricKey: text("metric_key").notNull(),
     value: numeric("value", { precision: 10, scale: 3 }).notNull(),
@@ -26,6 +30,7 @@ export const measurements = pgTable(
       "measurements_metric_key_check",
       sql`${table.metricKey} IN ('bodyweight', 'waist', 'chest', 'hips', 'neck', 'bicep_left', 'bicep_right', 'thigh_left', 'thigh_right', 'body_fat_estimate', 'blood_pressure_systolic', 'blood_pressure_diastolic', 'resting_heart_rate')`,
     ),
+    index("idx_measurements_user_id").on(table.userId),
     index("idx_measurements_metric_date").on(table.metricKey, table.measuredAt),
     index("idx_measurements_visibility").on(table.visibility),
   ],
