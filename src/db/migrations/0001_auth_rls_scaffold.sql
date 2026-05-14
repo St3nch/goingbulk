@@ -244,6 +244,64 @@ CREATE TRIGGER trg_user_profiles_audit_role_change
   AFTER UPDATE ON public.user_profiles
   FOR EACH ROW EXECUTE FUNCTION public.audit_user_role_change();
 
+CREATE OR REPLACE FUNCTION public.audit_visibility_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+BEGIN
+  IF NEW.visibility IS DISTINCT FROM OLD.visibility THEN
+    INSERT INTO public.audit_log (
+      table_name,
+      record_id,
+      action,
+      old_values,
+      new_values,
+      changed_by
+    )
+    VALUES (
+      TG_TABLE_NAME,
+      NEW.id,
+      'visibility_changed',
+      jsonb_build_object('visibility', OLD.visibility),
+      jsonb_build_object('visibility', NEW.visibility),
+      auth.uid()
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$func$;
+
+CREATE TRIGGER trg_nutrition_logs_audit_visibility_change
+  AFTER UPDATE ON public.nutrition_logs
+  FOR EACH ROW EXECUTE FUNCTION public.audit_visibility_change();
+
+CREATE TRIGGER trg_measurements_audit_visibility_change
+  AFTER UPDATE ON public.measurements
+  FOR EACH ROW EXECUTE FUNCTION public.audit_visibility_change();
+
+CREATE TRIGGER trg_workout_sessions_audit_visibility_change
+  AFTER UPDATE ON public.workout_sessions
+  FOR EACH ROW EXECUTE FUNCTION public.audit_visibility_change();
+
+CREATE TRIGGER trg_supplement_logs_audit_visibility_change
+  AFTER UPDATE ON public.supplement_logs
+  FOR EACH ROW EXECUTE FUNCTION public.audit_visibility_change();
+
+CREATE TRIGGER trg_experiments_audit_visibility_change
+  AFTER UPDATE ON public.experiments
+  FOR EACH ROW EXECUTE FUNCTION public.audit_visibility_change();
+
+CREATE TRIGGER trg_confounder_logs_audit_visibility_change
+  AFTER UPDATE ON public.confounder_logs
+  FOR EACH ROW EXECUTE FUNCTION public.audit_visibility_change();
+
+CREATE TRIGGER trg_datasets_audit_visibility_change
+  AFTER UPDATE ON public.datasets
+  FOR EACH ROW EXECUTE FUNCTION public.audit_visibility_change();
+
 CREATE OR REPLACE FUNCTION public.audit_log_immutable()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -282,6 +340,7 @@ REVOKE EXECUTE ON FUNCTION public.can_view_owned_dataset(uuid, public.visibility
 REVOKE EXECUTE ON FUNCTION public.handle_new_auth_user() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.prevent_user_role_self_change() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.audit_user_role_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.audit_visibility_change() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.audit_log_immutable() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM PUBLIC;
 
@@ -595,4 +654,5 @@ CREATE POLICY "audit_log_select_admin"
 CREATE POLICY "audit_log_insert_admin"
   ON public.audit_log FOR INSERT
   WITH CHECK (public.is_owner_or_admin());
+
 
