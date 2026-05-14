@@ -319,11 +319,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.datasets TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.dataset_exports TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nutrition_log_nutrients TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.exercise_sets TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nutrient_definitions TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.exercises TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.supplements TO authenticated;
+GRANT SELECT ON TABLE public.nutrient_definitions TO authenticated;
+GRANT SELECT ON TABLE public.exercises TO authenticated;
+GRANT SELECT ON TABLE public.supplements TO authenticated;
 
-GRANT INSERT ON TABLE public.audit_log TO authenticated;
+REVOKE INSERT ON TABLE public.audit_log FROM authenticated;
 
 -- Intentionally no anon/authenticated grants for import operational tables.
 REVOKE ALL ON TABLE public.nutrition_import_batches FROM anon, authenticated;
@@ -341,7 +341,13 @@ CREATE POLICY "user_profiles_select_self_admin"
 
 CREATE POLICY "user_profiles_insert_self_admin"
   ON public.user_profiles FOR INSERT
-  WITH CHECK (id = auth.uid() OR public.is_owner_or_admin());
+  WITH CHECK (
+    (
+      id = auth.uid()
+      AND role = 'public'
+    )
+    OR public.is_owner_or_admin()
+  );
 
 CREATE POLICY "user_profiles_update_self"
   ON public.user_profiles FOR UPDATE
@@ -589,3 +595,4 @@ CREATE POLICY "audit_log_select_admin"
 CREATE POLICY "audit_log_insert_admin"
   ON public.audit_log FOR INSERT
   WITH CHECK (public.is_owner_or_admin());
+
