@@ -210,6 +210,40 @@ CREATE TRIGGER trg_user_profiles_prevent_role_self_change
   BEFORE UPDATE ON public.user_profiles
   FOR EACH ROW EXECUTE FUNCTION public.prevent_user_role_self_change();
 
+CREATE OR REPLACE FUNCTION public.audit_user_role_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role THEN
+    INSERT INTO public.audit_log (
+      table_name,
+      record_id,
+      action,
+      old_values,
+      new_values,
+      changed_by
+    )
+    VALUES (
+      'user_profiles',
+      NEW.id,
+      'user_role_changed',
+      jsonb_build_object('role', OLD.role),
+      jsonb_build_object('role', NEW.role),
+      auth.uid()
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$func$;
+
+CREATE TRIGGER trg_user_profiles_audit_role_change
+  AFTER UPDATE ON public.user_profiles
+  FOR EACH ROW EXECUTE FUNCTION public.audit_user_role_change();
+
 CREATE OR REPLACE FUNCTION public.audit_log_immutable()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -247,6 +281,7 @@ REVOKE EXECUTE ON FUNCTION public.can_view_owned_visibility(uuid, public.visibil
 REVOKE EXECUTE ON FUNCTION public.can_view_owned_dataset(uuid, public.visibility_enum) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.handle_new_auth_user() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.prevent_user_role_self_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.audit_user_role_change() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.audit_log_immutable() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM PUBLIC;
 

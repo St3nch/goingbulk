@@ -193,6 +193,14 @@ if ([int]$viewerOtherPrivate -ne 0) { throw "Authenticated user should not see a
 Write-Output "--- verify non-owner authenticated user cannot write another user's governed row ---"
 Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.measurements (user_id, measured_at, metric_key, value, unit, visibility) VALUES ('$otherId', NOW(), 'bodyweight', 202, 'lb', 'private');" "row-level security|permission denied|violates row-level security"
 
+Write-Output "--- verify owner/admin role changes create audit rows ---"
+Run-Sql-Command "UPDATE public.user_profiles SET role='editor' WHERE id='$otherId';"
+$auditRoleChangeCount = Run-Sql "SELECT count(*) FROM public.audit_log WHERE table_name='user_profiles' AND action='user_role_changed' AND record_id='$otherId';"
+Write-Output "role change audit count: $auditRoleChangeCount"
+if ([int]$auditRoleChangeCount -lt 1) {
+  throw "Expected audit row for user role change."
+}
+
 Write-Output "--- verify self-promotion is denied and persisted writes cannot escalate ---"
 Run-Role-Sql-Expect-Fail "authenticated" $viewerId "UPDATE public.user_profiles SET role='owner' WHERE id='$viewerId';" "role changes require owner/admin|row-level security|permission denied"
 $viewerRole = Run-Sql "SELECT role FROM public.user_profiles WHERE id='$viewerId';"

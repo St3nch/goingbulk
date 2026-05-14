@@ -47,6 +47,7 @@ These docs are separate from the VedaOps doctrine repository. VedaOps docs are c
 38. `38-training-program-template-and-scheduling-model.md` - planned workout program, scheduling, daily execution, and planned-vs-actual tracking model based on the collected Jim Stoppani program structures.
 39. `39-transparency-data-display-and-tracking-model.md` - transparency-focused display and tracking model covering planned-vs-actual, modifications, recovery context, symptoms, costs, scorecards, and public-safe summaries.
 40. `40-training-program-schema-contract.md` - implementation-ready schema contract for planned training programs, scheduling, planned sets, substitutions, rest tracking, planned-vs-actual links, and public/private display rules.
+41. `41-literature-evidence-and-supplement-experiment-pipeline.md` - future research-literature evidence layer for supplement studies, claim extraction, experiment ideas, paper access status, and N=1 replication planning.
 
 ## Working Principle
 
