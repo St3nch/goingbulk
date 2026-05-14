@@ -12,11 +12,15 @@ import {
 
 import { confidenceEnum, logSourceEnum, visibilityEnum } from "./enums";
 import { nutritionImportBatches, nutritionImportRows } from "./nutrition-imports";
+import { userProfiles } from "./user-profiles";
 
 export const nutritionLogs = pgTable(
   "nutrition_logs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userProfiles.id, { onDelete: "cascade" }),
     date: date("date").notNull(),
     mealName: text("meal_name"),
     foodNameSnapshot: text("food_name_snapshot").notNull(),
@@ -42,6 +46,7 @@ export const nutritionLogs = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    index("idx_nutrition_logs_user_id").on(table.userId),
     index("idx_nutrition_logs_date").on(table.date),
     index("idx_nutrition_logs_visibility").on(table.visibility),
     index("idx_nutrition_logs_source_batch").on(table.sourceBatchId),
