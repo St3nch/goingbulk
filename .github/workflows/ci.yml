@@ -72,7 +72,13 @@ jobs:
       - name: Apply Drizzle migrations
         run: pnpm db:migrate
         env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/postgres
+
+      - name: Verify hardened DB objects exist
+        run: |
+          docker exec supabase_db_goingbulk psql -U postgres -d postgres -tAc "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename='audit_log';"
+          docker exec supabase_db_goingbulk psql -U postgres -d postgres -tAc "SELECT count(*) FROM pg_proc WHERE proname='audit_log_immutable';"
+          docker exec supabase_db_goingbulk psql -U postgres -d postgres -tAc "SELECT count(*) FROM pg_tables WHERE schemaname='drizzle' AND tablename='__drizzle_migrations';"
 
       - name: Run database hammer smoke tests
         run: pnpm db:hammer

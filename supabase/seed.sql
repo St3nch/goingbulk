@@ -1,0 +1,3 @@
+-- GoingBulk local development seed file.
+-- Intentionally minimal for now.
+-- Required because supabase/config.toml references ./seed.sql during db reset.

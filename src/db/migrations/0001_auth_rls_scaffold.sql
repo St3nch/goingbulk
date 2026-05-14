@@ -210,6 +210,40 @@ CREATE TRIGGER trg_user_profiles_prevent_role_self_change
   BEFORE UPDATE ON public.user_profiles
   FOR EACH ROW EXECUTE FUNCTION public.prevent_user_role_self_change();
 
+CREATE OR REPLACE FUNCTION public.audit_user_role_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role THEN
+    INSERT INTO public.audit_log (
+      table_name,
+      record_id,
+      action,
+      old_values,
+      new_values,
+      changed_by
+    )
+    VALUES (
+      'user_profiles',
+      NEW.id,
+      'user_role_changed',
+      jsonb_build_object('role', OLD.role),
+      jsonb_build_object('role', NEW.role),
+      auth.uid()
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$func$;
+
+CREATE TRIGGER trg_user_profiles_audit_role_change
+  AFTER UPDATE ON public.user_profiles
+  FOR EACH ROW EXECUTE FUNCTION public.audit_user_role_change();
+
 CREATE OR REPLACE FUNCTION public.audit_log_immutable()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -247,6 +281,7 @@ REVOKE EXECUTE ON FUNCTION public.can_view_owned_visibility(uuid, public.visibil
 REVOKE EXECUTE ON FUNCTION public.can_view_owned_dataset(uuid, public.visibility_enum) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.handle_new_auth_user() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.prevent_user_role_self_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.audit_user_role_change() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.audit_log_immutable() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM PUBLIC;
 
@@ -284,11 +319,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.datasets TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.dataset_exports TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nutrition_log_nutrients TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.exercise_sets TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.nutrient_definitions TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.exercises TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.supplements TO authenticated;
+GRANT SELECT ON TABLE public.nutrient_definitions TO authenticated;
+GRANT SELECT ON TABLE public.exercises TO authenticated;
+GRANT SELECT ON TABLE public.supplements TO authenticated;
 
-GRANT INSERT ON TABLE public.audit_log TO authenticated;
+REVOKE INSERT ON TABLE public.audit_log FROM authenticated;
 
 -- Intentionally no anon/authenticated grants for import operational tables.
 REVOKE ALL ON TABLE public.nutrition_import_batches FROM anon, authenticated;
@@ -306,7 +341,13 @@ CREATE POLICY "user_profiles_select_self_admin"
 
 CREATE POLICY "user_profiles_insert_self_admin"
   ON public.user_profiles FOR INSERT
-  WITH CHECK (id = auth.uid() OR public.is_owner_or_admin());
+  WITH CHECK (
+    (
+      id = auth.uid()
+      AND role = 'public'
+    )
+    OR public.is_owner_or_admin()
+  );
 
 CREATE POLICY "user_profiles_update_self"
   ON public.user_profiles FOR UPDATE
@@ -554,3 +595,4 @@ CREATE POLICY "audit_log_select_admin"
 CREATE POLICY "audit_log_insert_admin"
   ON public.audit_log FOR INSERT
   WITH CHECK (public.is_owner_or_admin());
+

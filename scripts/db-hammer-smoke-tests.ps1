@@ -134,8 +134,18 @@ foreach ($grantCheck in $grantChecks) {
 Write-Output "--- verify operational tables are not granted to API roles ---"
 $blockedGrantChecks = @(
   "anon:audit_log:SELECT",
+  "authenticated:audit_log:INSERT",
   "anon:nutrition_import_batches:SELECT",
-  "authenticated:nutrition_import_rows:SELECT"
+  "authenticated:nutrition_import_rows:SELECT",
+  "authenticated:exercises:INSERT",
+  "authenticated:exercises:UPDATE",
+  "authenticated:exercises:DELETE",
+  "authenticated:supplements:INSERT",
+  "authenticated:supplements:UPDATE",
+  "authenticated:supplements:DELETE",
+  "authenticated:nutrient_definitions:INSERT",
+  "authenticated:nutrient_definitions:UPDATE",
+  "authenticated:nutrient_definitions:DELETE"
 )
 foreach ($grantCheck in $blockedGrantChecks) {
   $parts = $grantCheck.Split(":")
@@ -193,11 +203,28 @@ if ([int]$viewerOtherPrivate -ne 0) { throw "Authenticated user should not see a
 Write-Output "--- verify non-owner authenticated user cannot write another user's governed row ---"
 Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.measurements (user_id, measured_at, metric_key, value, unit, visibility) VALUES ('$otherId', NOW(), 'bodyweight', 202, 'lb', 'private');" "row-level security|permission denied|violates row-level security"
 
+Write-Output "--- verify owner/admin role changes create audit rows ---"
+Run-Sql-Command "UPDATE public.user_profiles SET role='editor' WHERE id='$otherId';"
+$auditRoleChangeCount = Run-Sql "SELECT count(*) FROM public.audit_log WHERE table_name='user_profiles' AND action='user_role_changed' AND record_id='$otherId';"
+Write-Output "role change audit count: $auditRoleChangeCount"
+if ([int]$auditRoleChangeCount -lt 1) {
+  throw "Expected audit row for user role change."
+}
+
 Write-Output "--- verify self-promotion is denied and persisted writes cannot escalate ---"
 Run-Role-Sql-Expect-Fail "authenticated" $viewerId "UPDATE public.user_profiles SET role='owner' WHERE id='$viewerId';" "role changes require owner/admin|row-level security|permission denied"
 $viewerRole = Run-Sql "SELECT role FROM public.user_profiles WHERE id='$viewerId';"
 Write-Output "viewer role after self-promotion attempt: $viewerRole"
 if ($viewerRole.Trim() -ne "public") { throw "Authenticated user self-promoted to $viewerRole." }
+
+Write-Output "--- verify INSERT self-promotion is denied ---"
+Run-Role-Sql-Expect-Fail "authenticated" $viewerId "DELETE FROM public.user_profiles WHERE id='$viewerId'; INSERT INTO public.user_profiles (id, email, role) VALUES ('$viewerId', 'hammer-viewer-reinsert@example.test', 'owner');" "role|row-level security|permission denied|violates row-level security"
+$viewerRoleAfterInsertAttempt = Run-Sql "SELECT role FROM public.user_profiles WHERE id='$viewerId';"
+Write-Output "viewer role after insert self-promotion attempt: $viewerRoleAfterInsertAttempt"
+if ($viewerRoleAfterInsertAttempt.Trim() -ne "public") { throw "Authenticated user self-promoted via INSERT to $viewerRoleAfterInsertAttempt." }
+
+Write-Output "--- verify direct authenticated audit_log inserts are denied ---"
+Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.audit_log (table_name, record_id, action, changed_by) VALUES ('hammer', gen_random_uuid(), 'spoofed_audit', '$viewerId');" "permission denied|row-level security|violates row-level security"
 
 Write-Output "--- verify non-admin authenticated users cannot mutate global reference tables ---"
 Run-Sql-Command "INSERT INTO public.supplements (slug, name) VALUES ('hammer-creatine', 'Hammer Creatine') ON CONFLICT DO NOTHING;"
@@ -266,6 +293,20 @@ if ($publishedTables -match "audit_log|nutrition_import") {
   throw "Sensitive tables exposed via realtime publication: $publishedTables"
 }
 
+Write-Output "--- verify auth user deletion preserves audit history with null changed_by ---"
+$deleteAuditedUserOutput = docker exec $container psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DELETE FROM auth.users WHERE id='$otherId';" 2>&1
+$deleteAuditedUserExit = $LASTEXITCODE
+Write-Output $deleteAuditedUserOutput
+if ($deleteAuditedUserExit -ne 0) { throw "Deleting an audited auth user failed unexpectedly." }
+$deletedUserProfileCount = Run-Sql "SELECT count(*) FROM public.user_profiles WHERE id='$otherId';"
+$auditRowsForDeletedUser = Run-Sql "SELECT count(*) FROM public.audit_log WHERE table_name='user_profiles' AND action='user_role_changed' AND record_id='$otherId';"
+$auditRowsNullChangedBy = Run-Sql "SELECT count(*) FROM public.audit_log WHERE table_name='user_profiles' AND action='user_role_changed' AND record_id='$otherId' AND changed_by IS NULL;"
+Write-Output "deleted user profile count: $deletedUserProfileCount"
+Write-Output "audit rows retained for deleted user: $auditRowsForDeletedUser"
+Write-Output "audit rows with null changed_by: $auditRowsNullChangedBy"
+if ([int]$deletedUserProfileCount -ne 0) { throw "Deleted auth user still has user_profile row." }
+if ([int]$auditRowsForDeletedUser -lt 1) { throw "Audit history was not retained for deleted user." }
+if ([int]$auditRowsNullChangedBy -lt 1) { throw "Expected deleted user's audit changed_by to be nulled by FK action." }
 Write-Output "--- verify updated_at trigger exists and fires ---"
 $trg = Run-Sql "SELECT count(*) FROM pg_trigger WHERE tgname='trg_exercises_set_updated_at';"
 if ([int]$trg -ne 1) {
@@ -280,3 +321,5 @@ if ($updated.Trim() -ne "t") {
 }
 
 Write-Output "=== Hammer smoke tests passed ==="
+
+
