@@ -58,5 +58,5 @@ Boring, consistent logging creates trustworthy data. Trustworthy data creates be
 GoingBulk is not intended to be a medical advice platform, clinical trial, drama channel, or replacement for professional care.
 
 GoingBulk experiments are personal N=1 documentation unless explicitly stated otherwise.
-
+42. 42-current-security-posture.md - snapshot of current RLS, audit, privilege, governance, CI, and operational security posture.
 

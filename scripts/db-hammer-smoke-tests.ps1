@@ -235,6 +235,24 @@ if ($null -ne $supplementUpdateAttempt -and $supplementUpdateAttempt.ToString().
 }
 Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.nutrient_definitions (nutrient_key, display_name, unit, category) VALUES ('hammer_attack_nutrient', 'Attack', 'g', 'macro');" "row-level security|permission denied"
 
+Write-Output "--- verify visibility transitions are audited and affect anon visibility ---"
+$visibilityLogId = Run-Sql "SELECT id FROM public.nutrition_logs WHERE food_name_snapshot='Hammer Owner Private Food' LIMIT 1;"
+Run-Sql-Command "UPDATE public.nutrition_logs SET visibility='public' WHERE id='$visibilityLogId';"
+$anonAfterPromotion = Run-Role-Sql "anon" $viewerId "SELECT count(*) FROM public.nutrition_logs WHERE id='$visibilityLogId';"
+Write-Output "anon visibility after promotion: $anonAfterPromotion"
+if ([int]$anonAfterPromotion -lt 1) { throw "Anon should see row after visibility promotion to public." }
+$promotionAuditCount = Run-Sql "SELECT count(*) FROM public.audit_log WHERE table_name='nutrition_logs' AND action='visibility_changed' AND record_id='$visibilityLogId' AND old_values->>'visibility'='private' AND new_values->>'visibility'='public';"
+Write-Output "promotion audit rows: $promotionAuditCount"
+if ([int]$promotionAuditCount -lt 1) { throw "Expected visibility promotion audit row." }
+
+Run-Sql-Command "UPDATE public.nutrition_logs SET visibility='private' WHERE id='$visibilityLogId';"
+$anonAfterDemotion = Run-Role-Sql "anon" $viewerId "SELECT count(*) FROM public.nutrition_logs WHERE id='$visibilityLogId';"
+Write-Output "anon visibility after demotion: $anonAfterDemotion"
+if ([int]$anonAfterDemotion -ne 0) { throw "Anon should not see row after visibility demotion to private." }
+$demotionAuditCount = Run-Sql "SELECT count(*) FROM public.audit_log WHERE table_name='nutrition_logs' AND action='visibility_changed' AND record_id='$visibilityLogId' AND old_values->>'visibility'='public' AND new_values->>'visibility'='private';"
+Write-Output "demotion audit rows: $demotionAuditCount"
+if ([int]$demotionAuditCount -lt 1) { throw "Expected visibility demotion audit row." }
+
 Write-Output "--- verify child visibility inherits from parent nutrition log ---"
 Run-Sql-Command "INSERT INTO public.nutrient_definitions (nutrient_key, display_name, unit, category) VALUES ('hammer_protein', 'Hammer Protein', 'g', 'macro') ON CONFLICT (nutrient_key) DO NOTHING;"
 Run-Sql-Command "INSERT INTO public.nutrition_log_nutrients (nutrition_log_id, nutrient_key, value) SELECT id, 'hammer_protein', 10 FROM public.nutrition_logs WHERE food_name_snapshot='Hammer Owner Public Food';"
