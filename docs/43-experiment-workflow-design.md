@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the future experiment workflow model for GoingBulk.
+This document defines the experiment workflow model for GoingBulk.
 
 GoingBulk experiments should connect:
 
@@ -237,6 +237,12 @@ Confidence labels might include:
 - `high`
 - `inconclusive`
 
+Note: `baseline_value`, `target_value`, and `observed_value` are stored as
+`text` for MVP flexibility. This defers the complexity of numeric type
+enforcement, unit normalization, and mixed-metric comparison. When a
+structured comparison feature is built, add `numeric` columns alongside
+the text columns rather than migrating in place. Deferred and tracked.
+
 ### `experiment_evidence_links`
 
 Links an experiment to citations, papers, websites, videos, or manually entered rationale.
@@ -300,18 +306,17 @@ This may not be needed immediately if `confounder_logs` can be filtered by date 
 
 ## Minimal First Implementation
 
-The first implementation should be intentionally small.
+The first implementation is intentionally small and has landed.
 
-Suggested MVP experiment workflow:
+Implemented in migrations `0002_easy_thena.sql` and `0003_experiment_workflow_rls.sql`:
 
-1. Extend `experiments` only if needed.
-2. Add `experiment_interventions`.
-3. Add `experiment_outcomes`.
-4. Add `experiment_evidence_links`.
-5. Use existing visibility/RLS/audit posture.
-6. Add hammer tests for ownership and visibility.
+1. `experiment_interventions` — tracks what changed
+2. `experiment_outcomes` — tracks expected and observed outcomes
+3. `experiment_evidence_links` — links to citations and rationale
+4. Parent-experiment-inherited RLS: child tables have no `user_id` or `visibility` columns; ownership and visibility are inherited from the parent `experiments` row via RLS subquery
+5. Hammer tests for ownership, cross-user write denial, anon private/public visibility, and parent visibility transition propagation
 
-Do not implement advanced statistics yet.
+Not yet implemented (see deferred section below).
 
 ## Governance Requirements
 
@@ -334,7 +339,7 @@ Future audit events should include:
 
 - experiment created
 - experiment status changed
-- experiment visibility changed
+- experiment visibility changed (currently audited via visibility_change trigger)
 - intervention added
 - intervention changed
 - outcome added
@@ -343,29 +348,36 @@ Future audit events should include:
 - experiment published
 - experiment unpublished
 
-Initial implementation can rely on visibility audit triggers already in the database for visibility changes.
+Currently implemented:
 
-Additional lifecycle audit triggers can be added later.
+- visibility transitions on `experiments` are audited via the `audit_visibility_change` trigger.
+
+Not yet implemented (deferred and tracked):
+
+- direct audit triggers for `experiment_interventions`, `experiment_outcomes`, `experiment_evidence_links` writes.
+  This is a known integrity gap: post-hoc changes to expected outcome direction or values leave no audit trail.
+  This must be resolved before any public experiment reporting workflow ships.
+- experiment lifecycle/status audit (planned → active → completed → published).
 
 ## RLS Requirements
 
-Experiment child tables should follow parent ownership.
+Experiment child tables follow parent ownership.
 
-Expected behavior:
+Current behavior (implemented and hammer-tested):
 
 - owner can create/update/delete own experiment child rows
 - owner/admin can access all
 - anon can only read child rows attached to public experiments
-- professional viewer can read professional-visible experiments if policy allows
 - non-owner authenticated users cannot write child rows for another user
 
-Hammer tests should prove:
+Note: the RLS uses a parent-subquery pattern (EXISTS against experiments).
+This is correct for current MVP volumes. Revisit with denormalized
+`user_id`/`visibility` columns on child tables if query volume grows
+significantly. Deferred and tracked.
 
-- owner insert works
-- cross-user insert fails
-- anon cannot read private experiment child rows
-- anon can read public experiment child rows
-- visibility transitions affect child visibility
+Not yet hammer-tested:
+
+- professional viewer role against professional-visibility experiments
 
 ## Publication Model
 
@@ -468,20 +480,41 @@ Do not build:
 - multi-user study coordination
 - public dataset releases
 - AI experiment designer
+- DOI/PMID enforcement constraints on evidence links
+- structured numeric outcome values (add alongside text when comparison features are needed)
+- evidence review workflow or review_status fields (wait for literature module)
+- experiment_confounder_links table (date-range filtering of confounder_logs is sufficient for now)
+- publication workflow fields (wait for actual public reporting workflow)
 
-Build enough to run one real, well-documented experiment.
+## Deferred But Tracked
+
+These items are explicitly deferred, not forgotten.
+
+- Direct audit triggers for `experiment_interventions`, `experiment_outcomes`, `experiment_evidence_links` writes. This is the highest-priority deferred item because post-hoc outcome editing is the main pre-registration integrity risk.
+- Experiment lifecycle/status audit triggers.
+- Structured numeric outcome values alongside current text fields.
+- Evidence link review workflow and review_status.
+- DOI/PMID consistency enforcement on evidence_links.
+- Professional/internal visibility hammer coverage for experiment child tables.
+- `experiment_confounder_links` junction table.
+- Full experiment publication metadata and publication workflow.
+- Literature ingestion tables and APIs.
+
+All of the above are tracked in `docs/32-full-project-roadmap.md` under Deferred But Tracked Work.
 
 ## Open Questions
 
-- Should experiment interventions be fully normalized now or start semi-structured?
-- Should outcomes link directly to existing measurements/workout/nutrition tables?
-- Should experiment status changes be audited immediately?
-- How much publication metadata is needed before the first public experiment?
-- Should evidence links be independent now or wait for the literature module?
+- Should experiment status changes be audited before or after the first public experiment ships?
+- Should evidence links eventually require a review step before they appear on public pages?
 - Should abandoned experiments be publicly visible if they were pre-registered?
+- Should the literature pipeline connect to `experiment_evidence_links` directly or via a separate join table?
 
 ## Status
 
-Planning document.
+Minimal schema slice implemented and hammer-validated.
 
-No schema should be implemented until this design is reviewed and tightened.
+- `experiment_interventions`, `experiment_outcomes`, `experiment_evidence_links` tables exist with RLS.
+- Ownership and visibility inherit from the parent `experiments` row.
+- Hammer tests validate ownership, cross-user denial, and anon visibility behavior.
+
+The full experiment workflow (lifecycle audit, publication workflow, literature integration) remains in design/deferred state.

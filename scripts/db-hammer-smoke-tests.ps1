@@ -5,6 +5,16 @@ Write-Output "=== GoingBulk DB Hammer Smoke Tests ==="
 
 $container = if ($env:GOINGBULK_DB_CONTAINER) { $env:GOINGBULK_DB_CONTAINER } else { "supabase_db_goingbulk" }
 
+# Safety guard: hammer tests write immutable audit rows and mutate data.
+# They must only run against a local ephemeral database.
+# The default container name (supabase_db_goingbulk) is allowed unconditionally.
+# Any other container requires GOINGBULK_ALLOW_HAMMER=1 to be set explicitly.
+if ($container -ne "supabase_db_goingbulk" -and $env:GOINGBULK_ALLOW_HAMMER -ne "1") {
+  throw "Hammer tests refused: container '$container' is not the default local container (supabase_db_goingbulk). " +
+        "Set GOINGBULK_ALLOW_HAMMER=1 only if you are certain this is a disposable ephemeral database. " +
+        "Never run hammer tests against shared, staging, or production databases."
+}
+
 function Run-Sql {
   param([string]$Sql)
   docker exec $container psql -U postgres -d postgres -tAc $Sql
@@ -65,6 +75,9 @@ $expectedTables = @(
   "datasets",
   "exercises",
   "confounder_logs",
+  "experiment_evidence_links",
+  "experiment_interventions",
+  "experiment_outcomes",
   "experiments",
   "measurements",
   "nutrition_import_batches",
@@ -86,10 +99,10 @@ foreach ($table in $expectedTables) {
 }
 
 Write-Output "--- verify RLS enabled count ---"
-$rlsCount = Run-Sql "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename IN ('audit_log','dataset_exports','datasets','exercises','confounder_logs','experiments','measurements','nutrition_import_batches','nutrition_import_rows','nutrient_definitions','nutrition_log_nutrients','nutrition_logs','supplement_logs','supplements','user_profiles','exercise_sets','workout_sessions') AND rowsecurity=true;"
+$rlsCount = Run-Sql "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename IN ('audit_log','dataset_exports','datasets','exercises','confounder_logs','experiment_evidence_links','experiment_interventions','experiment_outcomes','experiments','measurements','nutrition_import_batches','nutrition_import_rows','nutrient_definitions','nutrition_log_nutrients','nutrition_logs','supplement_logs','supplements','user_profiles','exercise_sets','workout_sessions') AND rowsecurity=true;"
 Write-Output "RLS tables: $rlsCount"
-if ([int]$rlsCount -ne 17) {
-  throw "Expected exactly 17 RLS-enabled GoingBulk public tables."
+if ([int]$rlsCount -ne 20) {
+  throw "Expected exactly 20 RLS-enabled GoingBulk public tables."
 }
 
 Write-Output "--- verify helper functions exist ---"
@@ -100,7 +113,7 @@ if ([int]$fnCount -ne 8) {
 }
 
 Write-Output "--- verify policy coverage ---"
-$policyCount = Run-Sql "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename IN ('audit_log','dataset_exports','datasets','exercises','confounder_logs','experiments','measurements','nutrition_import_batches','nutrition_import_rows','nutrient_definitions','nutrition_log_nutrients','nutrition_logs','supplement_logs','supplements','user_profiles','exercise_sets','workout_sessions');"
+$policyCount = Run-Sql "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename IN ('audit_log','dataset_exports','datasets','exercises','confounder_logs','experiment_evidence_links','experiment_interventions','experiment_outcomes','experiments','measurements','nutrition_import_batches','nutrition_import_rows','nutrient_definitions','nutrition_log_nutrients','nutrition_logs','supplement_logs','supplements','user_profiles','exercise_sets','workout_sessions');"
 Write-Output "Policies: $policyCount"
 if ([int]$policyCount -lt 40) {
   throw "Expected broad RLS policy coverage."
@@ -117,6 +130,12 @@ $grantChecks = @(
   "authenticated:measurements:INSERT",
   "authenticated:workout_sessions:SELECT",
   "authenticated:exercise_sets:INSERT",
+  "authenticated:experiment_interventions:INSERT",
+  "authenticated:experiment_outcomes:INSERT",
+  "authenticated:experiment_evidence_links:INSERT",
+  "anon:experiment_interventions:SELECT",
+  "anon:experiment_outcomes:SELECT",
+  "anon:experiment_evidence_links:SELECT",
   "authenticated:supplement_logs:DELETE"
 )
 foreach ($grantCheck in $grantChecks) {
@@ -260,6 +279,33 @@ Run-Sql-Command "INSERT INTO public.nutrition_log_nutrients (nutrition_log_id, n
 $anonChildRows = Run-Role-Sql "anon" $viewerId "SELECT count(*) FROM public.nutrition_log_nutrients n JOIN public.nutrition_logs l ON l.id = n.nutrition_log_id WHERE l.food_name_snapshot LIKE 'Hammer Owner % Food';"
 Write-Output "anon child visible count: $anonChildRows"
 if ([int]$anonChildRows -ne 1) { throw "Anon should see only public child nutrient rows." }
+Write-Output "--- verify experiment workflow child table ownership and visibility inheritance ---"
+Run-Sql-Command "DELETE FROM public.experiments WHERE slug LIKE 'hammer-experiment-%';"
+Run-Sql-Command "INSERT INTO public.experiments (user_id, title, slug, experiment_type, status, visibility) VALUES ('$viewerId', 'Hammer Viewer Private Experiment', 'hammer-experiment-viewer-private', 'baseline', 'planned', 'private'), ('$otherId', 'Hammer Other Private Experiment', 'hammer-experiment-other-private', 'baseline', 'planned', 'private'), ('$viewerId', 'Hammer Viewer Public Experiment', 'hammer-experiment-viewer-public', 'baseline', 'planned', 'public');"
+$viewerPrivateExperimentId = Run-Sql "SELECT id FROM public.experiments WHERE slug='hammer-experiment-viewer-private';"
+$viewerPublicExperimentId = Run-Sql "SELECT id FROM public.experiments WHERE slug='hammer-experiment-viewer-public';"
+$otherPrivateExperimentId = Run-Sql "SELECT id FROM public.experiments WHERE slug='hammer-experiment-other-private';"
+$viewerChildInsertCount = Run-Role-Sql "authenticated" $viewerId "INSERT INTO public.experiment_interventions (experiment_id, intervention_type, title) VALUES ('$viewerPrivateExperimentId', 'nutrition', 'Hammer Viewer Intervention'); INSERT INTO public.experiment_outcomes (experiment_id, outcome_type, metric_key) VALUES ('$viewerPrivateExperimentId', 'primary', 'bodyweight'); INSERT INTO public.experiment_evidence_links (experiment_id, source_type, title) VALUES ('$viewerPrivateExperimentId', 'manual_note', 'Hammer Viewer Evidence'); SELECT (SELECT count(*) FROM public.experiment_interventions WHERE experiment_id='$viewerPrivateExperimentId') + (SELECT count(*) FROM public.experiment_outcomes WHERE experiment_id='$viewerPrivateExperimentId') + (SELECT count(*) FROM public.experiment_evidence_links WHERE experiment_id='$viewerPrivateExperimentId');"
+Write-Output "viewer child insert count: $viewerChildInsertCount"
+if ([int]$viewerChildInsertCount -ne 3) { throw "Experiment owner should insert all experiment workflow child row types." }
+Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.experiment_interventions (experiment_id, intervention_type, title) VALUES ('$otherPrivateExperimentId', 'nutrition', 'Hammer Cross-User Intervention');" "row-level security|permission denied|violates row-level security"
+Run-Sql-Command "INSERT INTO public.experiment_interventions (experiment_id, intervention_type, title) VALUES ('$viewerPublicExperimentId', 'nutrition', 'Hammer Public Intervention');"
+Run-Sql-Command "INSERT INTO public.experiment_outcomes (experiment_id, outcome_type, metric_key) VALUES ('$viewerPublicExperimentId', 'primary', 'training_volume');"
+Run-Sql-Command "INSERT INTO public.experiment_evidence_links (experiment_id, source_type, title) VALUES ('$viewerPublicExperimentId', 'manual_note', 'Hammer Public Evidence');"
+$anonPrivateExperimentChildren = Run-Role-Sql "anon" $otherId "SELECT (SELECT count(*) FROM public.experiment_interventions WHERE experiment_id='$viewerPrivateExperimentId') + (SELECT count(*) FROM public.experiment_outcomes WHERE experiment_id='$viewerPrivateExperimentId') + (SELECT count(*) FROM public.experiment_evidence_links WHERE experiment_id='$viewerPrivateExperimentId');"
+Write-Output "anon private experiment child count: $anonPrivateExperimentChildren"
+if ([int]$anonPrivateExperimentChildren -ne 0) { throw "Anon should not see child rows attached to private experiments." }
+$anonPublicExperimentChildren = Run-Role-Sql "anon" $otherId "SELECT (SELECT count(*) FROM public.experiment_interventions WHERE experiment_id='$viewerPublicExperimentId') + (SELECT count(*) FROM public.experiment_outcomes WHERE experiment_id='$viewerPublicExperimentId') + (SELECT count(*) FROM public.experiment_evidence_links WHERE experiment_id='$viewerPublicExperimentId');"
+Write-Output "anon public experiment child count: $anonPublicExperimentChildren"
+if ([int]$anonPublicExperimentChildren -ne 3) { throw "Anon should see child rows attached to public experiments." }
+Run-Sql-Command "UPDATE public.experiments SET visibility='private' WHERE id='$viewerPublicExperimentId';"
+$anonAfterExperimentDemotion = Run-Role-Sql "anon" $otherId "SELECT count(*) FROM public.experiment_interventions WHERE experiment_id='$viewerPublicExperimentId';"
+Write-Output "anon experiment child count after parent demotion: $anonAfterExperimentDemotion"
+if ([int]$anonAfterExperimentDemotion -ne 0) { throw "Anon should lose child visibility after parent experiment demotion." }
+Run-Sql-Command "UPDATE public.experiments SET visibility='public' WHERE id='$viewerPrivateExperimentId';"
+$anonAfterExperimentPromotion = Run-Role-Sql "anon" $otherId "SELECT count(*) FROM public.experiment_interventions WHERE experiment_id='$viewerPrivateExperimentId';"
+Write-Output "anon experiment child count after parent promotion: $anonAfterExperimentPromotion"
+if ([int]$anonAfterExperimentPromotion -lt 1) { throw "Anon should gain child visibility after parent experiment promotion." }
 
 Write-Output "--- verify supplement dedup index exists and is user-scoped ---"
 $idx = Run-Sql "SELECT count(*) FROM pg_indexes WHERE schemaname='public' AND indexname='idx_supplement_logs_dedup' AND indexdef LIKE '%user_id%';"

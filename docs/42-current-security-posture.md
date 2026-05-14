@@ -59,6 +59,9 @@ Current governed entities include:
 - `supplements`
 - `supplement_logs`
 - `experiments`
+- `experiment_interventions`
+- `experiment_outcomes`
+- `experiment_evidence_links`
 - `confounder_logs`
 - `datasets`
 - `dataset_exports`
@@ -71,6 +74,12 @@ Behavioral hammer tests validate:
 - authenticated ownership rules
 - owner/admin elevated access
 - child-table visibility inheritance
+- experiment child-table ownership inheritance
+- experiment child-table visibility inheritance
+- owner experiment child-row inserts
+- cross-user experiment child-row insert denial
+- anon private/public experiment child-row visibility
+- parent experiment visibility transitions affecting child-row visibility
 - `auth.uid()` resolution
 - non-owner write denial
 - self-promotion denial
@@ -105,17 +114,20 @@ Current audit posture:
 Current audited event coverage:
 
 - user role changes
+- visibility transitions on governed entities including experiments
 
 Planned future audit coverage:
 
-- visibility transitions
 - dataset publication
 - dataset promotion/demotion
 - governance approvals
 - experiment lifecycle events
+- experiment child-table write auditing
 
-Known limitation:
+Known limitations:
 
+- experiment child-table insert/update/delete events are not yet directly audited.
+- experiment lifecycle/status auditing is not yet complete.
 - PostgreSQL superusers and service-role connections can still bypass normal application protections.
 - Current posture assumes trusted infrastructure operators.
 

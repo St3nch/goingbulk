@@ -60,23 +60,35 @@ Last updated: 2026-05-14
 - [x] Current security posture snapshot
 - [x] Literature/evidence pipeline planning document
 - [x] Experiment workflow planning document drafted
+- [x] Experiment workflow child tables implemented (experiment_interventions, experiment_outcomes, experiment_evidence_links)
+- [x] Experiment child-table parent-inherited RLS (ownership and visibility inherited from experiments row)
+- [x] Experiment child-table hammer coverage (ownership, cross-user denial, anon private/public visibility, parent visibility transition propagation)
+- [x] Migration idempotence: hand-written governance migrations use DROP ... IF EXISTS guards
+- [x] CI: second db:migrate run to verify idempotence/no-op behavior
+- [x] CI: pnpm audit --audit-level=high added to verify pipeline
+- [x] Hammer: non-ephemeral database guard added
 
 ### Current Active Focus
 
-- [ ] Experiment workflow design review and tightening
-- [ ] MVP experiment schema decision
-- [ ] Experiment child-table RLS and hammer coverage planning
+- [ ] Build admin UI for experiment creation and management
+- [ ] Build Cronometer CSV import pipeline
+- [ ] Connect experiment workflow to real baseline data
 
 ### Next Three Priorities
 
-1. Finalize the minimal experiment workflow schema.
-2. Implement experiment workflow tables in a new migration.
-3. Add hammer tests for experiment ownership, child visibility, and cross-user write denial.
+1. Build the admin import flow for Cronometer CSV.
+2. Build bodyweight, workout, and supplement logging admin views.
+3. Wire the baseline experiment record to real logged data.
 
 ### Deferred But Tracked Work
 
 These items are intentionally not forgotten. They are deferred until the prerequisites are ready.
 
+- [ ] Experiment child-table write audit triggers (intervention added/changed, outcome added/changed, evidence link added)
+- [ ] Experiment lifecycle/status audit triggers (planned → active → completed → published)
+- [ ] Stronger experiment outcome provenance: post-hoc outcome editing currently leaves no audit trail; add audit trigger for experiment_outcomes writes before public reporting workflow ships
+- [ ] Import approval/rejection audit events
+- [ ] Professional/internal visibility hammer coverage
 - [ ] Full literature ingestion tables and APIs
 - [ ] Automated paper search / PubMed / Crossref / OpenAlex integration
 - [ ] Advanced statistical inference
@@ -916,4 +928,3 @@ Use entity structure after content exists.
 ```text
 GoingBulk should become massive by proving small loops repeatedly, not by building a massive system before the first loop works.
 ```
-
