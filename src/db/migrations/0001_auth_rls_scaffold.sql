@@ -187,8 +187,28 @@ AS $func$
 $func$;
 
 -- =====================================================
--- E. audit_log immutability
+-- E. hardening triggers
 -- =====================================================
+
+CREATE OR REPLACE FUNCTION public.prevent_user_role_self_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $func$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role
+     AND NEW.id = auth.uid()
+     AND NOT public.is_owner_or_admin() THEN
+    RAISE EXCEPTION 'role changes require owner/admin';
+  END IF;
+  RETURN NEW;
+END;
+$func$;
+
+CREATE TRIGGER trg_user_profiles_prevent_role_self_change
+  BEFORE UPDATE ON public.user_profiles
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_user_role_self_change();
 
 CREATE OR REPLACE FUNCTION public.audit_log_immutable()
 RETURNS trigger
@@ -219,6 +239,22 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
 REVOKE UPDATE, DELETE, TRUNCATE ON public.audit_log FROM PUBLIC, anon, authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.current_user_role() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.is_owner_or_admin() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.can_view_visibility(public.visibility_enum) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.can_view_owned_visibility(uuid, public.visibility_enum) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.can_view_owned_dataset(uuid, public.visibility_enum) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.handle_new_auth_user() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.prevent_user_role_self_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.audit_log_immutable() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public.current_user_role() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_owner_or_admin() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.can_view_visibility(public.visibility_enum) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.can_view_owned_visibility(uuid, public.visibility_enum) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.can_view_owned_dataset(uuid, public.visibility_enum) TO anon, authenticated;
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 
@@ -272,13 +308,10 @@ CREATE POLICY "user_profiles_insert_self_admin"
   ON public.user_profiles FOR INSERT
   WITH CHECK (id = auth.uid() OR public.is_owner_or_admin());
 
-CREATE POLICY "user_profiles_update_self_no_role_change"
+CREATE POLICY "user_profiles_update_self"
   ON public.user_profiles FOR UPDATE
   USING (id = auth.uid())
-  WITH CHECK (
-    id = auth.uid()
-    AND role = (SELECT role FROM public.user_profiles WHERE id = auth.uid())
-  );
+  WITH CHECK (id = auth.uid());
 
 CREATE POLICY "user_profiles_update_admin"
   ON public.user_profiles FOR UPDATE

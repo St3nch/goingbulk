@@ -47,6 +47,17 @@ function Run-Role-Sql-Expect-Fail {
   }
 }
 
+function Run-Role-Sql-Persist {
+  param(
+    [string]$Role,
+    [string]$Sub,
+    [string]$Sql
+  )
+
+  $sessionSql = "BEGIN; SET LOCAL ROLE $Role; SET LOCAL request.jwt.claim.sub = '$Sub'; $Sql; COMMIT;"
+  docker exec $container psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c $sessionSql
+}
+
 Write-Output "--- verify expected tables exist ---"
 $expectedTables = @(
   "audit_log",
@@ -164,6 +175,13 @@ $ownerPrivate = Run-Role-Sql "authenticated" $ownerId "SELECT count(*) FROM publ
 Write-Output "owner/admin private count: $ownerPrivate"
 if ([int]$ownerPrivate -ne 2) { throw "Owner/admin should see private rows across users." }
 
+Write-Output "--- verify auth.uid() resolves correctly under role simulation ---"
+$resolvedUid = Run-Role-Sql "authenticated" $viewerId "SELECT auth.uid();"
+Write-Output "resolved auth.uid(): $resolvedUid"
+if ($resolvedUid.Trim() -ne $viewerId) {
+  throw "auth.uid() resolved incorrectly. Expected $viewerId but got $resolvedUid"
+}
+
 Write-Output "--- verify regular authenticated users see own private but not others' private ---"
 $viewerOwnInsert = Run-Role-Sql "authenticated" $viewerId "INSERT INTO public.measurements (user_id, measured_at, metric_key, value, unit, visibility) VALUES ('$viewerId', NOW(), 'bodyweight', 201, 'lb', 'private'); SELECT count(*) FROM public.measurements WHERE user_id='$viewerId' AND metric_key='bodyweight';"
 Write-Output "viewer own insert/count: $viewerOwnInsert"
@@ -175,11 +193,20 @@ if ([int]$viewerOtherPrivate -ne 0) { throw "Authenticated user should not see a
 Write-Output "--- verify non-owner authenticated user cannot write another user's governed row ---"
 Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.measurements (user_id, measured_at, metric_key, value, unit, visibility) VALUES ('$otherId', NOW(), 'bodyweight', 202, 'lb', 'private');" "row-level security|permission denied|violates row-level security"
 
-Write-Output "--- verify self-promotion is denied ---"
-Run-Role-Sql "authenticated" $viewerId "UPDATE public.user_profiles SET role='owner' WHERE id='$viewerId'; SELECT role FROM public.user_profiles WHERE id='$viewerId';" | Out-Null
+Write-Output "--- verify self-promotion is denied and persisted writes cannot escalate ---"
+Run-Role-Sql-Expect-Fail "authenticated" $viewerId "UPDATE public.user_profiles SET role='owner' WHERE id='$viewerId';" "role changes require owner/admin|row-level security|permission denied"
 $viewerRole = Run-Sql "SELECT role FROM public.user_profiles WHERE id='$viewerId';"
 Write-Output "viewer role after self-promotion attempt: $viewerRole"
 if ($viewerRole.Trim() -ne "public") { throw "Authenticated user self-promoted to $viewerRole." }
+
+Write-Output "--- verify non-admin authenticated users cannot mutate global reference tables ---"
+Run-Sql-Command "INSERT INTO public.supplements (slug, name) VALUES ('hammer-creatine', 'Hammer Creatine') ON CONFLICT DO NOTHING;"
+Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.exercises (slug, name) VALUES ('hammer-attack', 'Hammer Attack');" "row-level security|permission denied"
+$supplementUpdateAttempt = Run-Role-Sql "authenticated" $viewerId "UPDATE public.supplements SET name='hijacked' WHERE slug='hammer-creatine' RETURNING id;"
+if ($null -ne $supplementUpdateAttempt -and $supplementUpdateAttempt.ToString().Trim() -ne "") {
+  throw "Non-admin user updated supplements row: $supplementUpdateAttempt"
+}
+Run-Role-Sql-Expect-Fail "authenticated" $viewerId "INSERT INTO public.nutrient_definitions (nutrient_key, display_name, unit, category) VALUES ('hammer_attack_nutrient', 'Attack', 'g', 'macro');" "row-level security|permission denied"
 
 Write-Output "--- verify child visibility inherits from parent nutrition log ---"
 Run-Sql-Command "INSERT INTO public.nutrient_definitions (nutrient_key, display_name, unit, category) VALUES ('hammer_protein', 'Hammer Protein', 'g', 'macro') ON CONFLICT (nutrient_key) DO NOTHING;"
@@ -219,6 +246,25 @@ $updateAuditExit = $LASTEXITCODE
 Write-Output $updateAuditOutput
 if ($updateAuditExit -eq 0) { throw "audit_log UPDATE should be blocked by immutability trigger." }
 if (($updateAuditOutput | Out-String) -notmatch "append-only") { throw "audit_log UPDATE failed for unexpected reason." }
+
+$deleteAuditOutput = docker exec $container psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DELETE FROM public.audit_log WHERE table_name='hammer';" 2>&1
+$deleteAuditExit = $LASTEXITCODE
+Write-Output $deleteAuditOutput
+if ($deleteAuditExit -eq 0) { throw "audit_log DELETE should be blocked by immutability trigger." }
+if (($deleteAuditOutput | Out-String) -notmatch "append-only") { throw "audit_log DELETE failed for unexpected reason." }
+
+$truncateAuditOutput = docker exec $container psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "TRUNCATE public.audit_log;" 2>&1
+$truncateAuditExit = $LASTEXITCODE
+Write-Output $truncateAuditOutput
+if ($truncateAuditExit -eq 0) { throw "audit_log TRUNCATE should be blocked by immutability trigger." }
+if (($truncateAuditOutput | Out-String) -notmatch "append-only") { throw "audit_log TRUNCATE failed for unexpected reason." }
+
+Write-Output "--- verify realtime publication does not expose sensitive tables ---"
+$publishedTables = Run-Sql "SELECT COALESCE(string_agg(tablename, ','), '') FROM pg_publication_tables WHERE pubname='supabase_realtime';"
+Write-Output "Realtime published tables: $publishedTables"
+if ($publishedTables -match "audit_log|nutrition_import") {
+  throw "Sensitive tables exposed via realtime publication: $publishedTables"
+}
 
 Write-Output "--- verify updated_at trigger exists and fires ---"
 $trg = Run-Sql "SELECT count(*) FROM pg_trigger WHERE tgname='trg_exercises_set_updated_at';"
