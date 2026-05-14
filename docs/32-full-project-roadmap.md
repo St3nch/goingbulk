@@ -19,6 +19,82 @@ Publish honestly enough to build trust.
 
 The full platform should not be built before the basic data-to-report loop works.
 
+## Roadmap Maintenance Rules
+
+This roadmap is a living control document, not a one-time planning artifact.
+
+Rules:
+
+- Keep this roadmap updated as work is completed.
+- Mark completed work explicitly.
+- Track in-progress work explicitly.
+- Document deferred work instead of losing it.
+- Capture major "not now" decisions with the reason they were deferred.
+- Keep MVP, post-MVP, and long-term platform work visible in one place.
+- Future GPT/Claude/AI assistants should use this roadmap before suggesting major new work.
+- Any branch that completes or materially changes roadmap scope should update this document.
+
+## Current Implementation Status
+
+Last updated: 2026-05-14
+
+### Completed Foundation Milestones
+
+- [x] Documentation-first project planning foundation
+- [x] GitHub repository and professional branch/PR workflow
+- [x] Next.js app foundation
+- [x] Supabase local development setup
+- [x] Drizzle migration foundation
+- [x] MVP schema foundation
+- [x] Supabase RLS foundation
+- [x] Ownership-aware RLS model
+- [x] Self-promotion prevention
+- [x] Explicit API grant/revoke hardening
+- [x] Immutable audit log enforcement
+- [x] Role-change audit logging
+- [x] Visibility-transition audit logging
+- [x] Behavioral database hammer tests
+- [x] CI database rebuild smoke tests
+- [x] Windows local Supabase reserved-port workaround
+- [x] Missing local seed file added
+- [x] Current security posture snapshot
+- [x] Literature/evidence pipeline planning document
+- [x] Experiment workflow planning document drafted
+
+### Current Active Focus
+
+- [ ] Experiment workflow design review and tightening
+- [ ] MVP experiment schema decision
+- [ ] Experiment child-table RLS and hammer coverage planning
+
+### Next Three Priorities
+
+1. Finalize the minimal experiment workflow schema.
+2. Implement experiment workflow tables in a new migration.
+3. Add hammer tests for experiment ownership, child visibility, and cross-user write denial.
+
+### Deferred But Tracked Work
+
+These items are intentionally not forgotten. They are deferred until the prerequisites are ready.
+
+- [ ] Full literature ingestion tables and APIs
+- [ ] Automated paper search / PubMed / Crossref / OpenAlex integration
+- [ ] Advanced statistical inference
+- [ ] Bayesian or causal modeling
+- [ ] Multi-participant study support
+- [ ] Public dataset release workflow
+- [ ] Curated public projection tables/views
+- [ ] Professional data explorer
+- [ ] Entity graph/content management system
+- [ ] Governed LLM assistant APIs
+- [ ] Community experiment suggestions
+- [ ] Sponsor/product testing workflow
+- [ ] Backup/restore CI
+- [ ] Migration hash verification
+- [ ] Golden schema drift detection
+- [ ] pgTAP or SQL-first test suite split
+- [ ] Audit hash-chain / cryptographic tamper evidence
+
 ## Roadmap Summary
 
 ```text
@@ -840,3 +916,4 @@ Use entity structure after content exists.
 ```text
 GoingBulk should become massive by proving small loops repeatedly, not by building a massive system before the first loop works.
 ```
+

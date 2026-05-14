@@ -59,4 +59,5 @@ GoingBulk is not intended to be a medical advice platform, clinical trial, drama
 
 GoingBulk experiments are personal N=1 documentation unless explicitly stated otherwise.
 42. 42-current-security-posture.md - snapshot of current RLS, audit, privilege, governance, CI, and operational security posture.
+43. 43-experiment-workflow-design.md - future governed N=1 experiment workflow model covering hypotheses, interventions, outcomes, evidence links, audit expectations, RLS requirements, and publication posture.
 
