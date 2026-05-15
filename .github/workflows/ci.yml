@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+
       - name: Check formatting
         run: pnpm format:check
 
@@ -70,6 +73,11 @@ jobs:
         run: supabase start
 
       - name: Apply Drizzle migrations
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/postgres
+
+      - name: Verify migrations are idempotent (second run must be a no-op)
         run: pnpm db:migrate
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/postgres

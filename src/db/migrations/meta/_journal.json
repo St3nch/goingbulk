@@ -15,6 +15,20 @@
       "when": 1778615000000,
       "tag": "0001_auth_rls_scaffold",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778795236400,
+      "tag": "0002_easy_thena",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778796933709,
+      "tag": "0003_experiment_workflow_rls",
+      "breakpoints": true
     }
   ]
 }
