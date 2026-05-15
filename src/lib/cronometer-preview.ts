@@ -36,7 +36,7 @@ export function parseCronometerCsv(csvText: string): CronometerPreviewResult {
 
   const previewRows: CronometerPreviewRow[] = records.slice(0, 20).map((record) => ({
     date: getValue(record, ["Date", "Day"]),
-    meal: getValue(record, ["Meal"]),
+    meal: getValue(record, ["Meal", "Group"]),
     food: getValue(record, ["Food Name", "Food"]),
     amount: getValue(record, ["Amount", "Serving"]),
     calories: getValue(record, ["Energy (kcal)", "Calories"]),
