@@ -3,6 +3,15 @@
 Purpose:
 Establish the smallest safe authentication/session foundation required for governed writes.
 
+Current status:
+- Supabase SSR session infrastructure implemented
+- middleware-based admin route protection implemented
+- current-user helper implemented
+- auth callback flow implemented
+- user_profile bootstrap trigger implemented
+- authenticated import batch persistence implemented
+- DB-backed Cronometer import preview implemented
+
 Why this exists:
 Nutrition import persistence correctly requires authenticated ownership (`uploaded_by`).
 The current governance model intentionally rejects anonymous or fake-user persistence.
@@ -23,6 +32,8 @@ Explicitly deferred:
 - enterprise auth features
 
 Next planned follow-up after auth foundation:
-- persisted nutrition import batches
-- persisted raw import rows
-- DB-backed import preview workflow
+- manual authenticated workflow validation
+- import approval/rejection workflow
+- normalization into nutrition_logs
+
+

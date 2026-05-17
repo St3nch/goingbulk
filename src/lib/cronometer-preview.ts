@@ -15,6 +15,8 @@ export type CronometerPreviewResult = {
   totalRows: number;
   previewRows: CronometerPreviewRow[];
   detectedColumns: string[];
+  /** Full parsed records — used by server-side persistence. */
+  records: Record<string, string>[];
 };
 
 function getValue(record: Record<string, string>, keys: string[]): string {
@@ -49,5 +51,6 @@ export function parseCronometerCsv(csvText: string): CronometerPreviewResult {
     totalRows: records.length,
     previewRows,
     detectedColumns: records.length > 0 ? Object.keys(records[0]) : [],
+    records,
   };
 }
