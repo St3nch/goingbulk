@@ -928,3 +928,32 @@ Use entity structure after content exists.
 ```text
 GoingBulk should become massive by proving small loops repeatedly, not by building a massive system before the first loop works.
 ```
+
+### Current Auth and Nutrition Import Status
+
+Implemented:
+- Supabase SSR session foundation
+- middleware-based `/admin/*` protection
+- current-user resolution helper
+- auth callback flow
+- automatic `user_profiles` bootstrap trigger
+- Cronometer CSV route (`/admin/imports/cronometer`)
+- realistic Cronometer fixture coverage
+- authenticated import batch persistence
+- raw nutrition import row persistence
+- SHA-256 file and row provenance hashes
+- DB-backed Cronometer import preview
+
+Current manual validation pending:
+- browser login/logout redirect sanity check
+- automatic profile bootstrap verification
+- authenticated Cronometer upload test
+- duplicate upload rejection test
+- ownership linkage verification
+
+Next required slice after manual validation:
+- import approval/rejection workflow
+- row validation status updates
+- normalization into `nutrition_logs`
+
+

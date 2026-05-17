@@ -1,0 +1,5 @@
+Day,Time,Group,Food Name,Amount,Energy (kcal),Protein (g),Carbs (g),Fat (g),Fiber (g),Sodium (mg),Sugars (g),Category
+2026-05-15,08:15 AM,Breakfast,Oats,80 g,300,10,54,6,8,2,1,Grains
+2026-05-15,08:20 AM,Breakfast,Whey Protein,1 scoop,120,25,3,1,0,90,2,Supplements
+2026-05-15,12:30 PM,Lunch,Chicken Breast,200 g,330,62,0,7,0,140,0,Poultry
+2026-05-15,18:45 PM,Dinner,White Rice,250 g,325,6,72,1,1,5,0,Grains
